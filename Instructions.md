@@ -56,7 +56,64 @@ Microsoft.EntityFrameworkCore.SqlServer
 Microsoft.EntityFrameworkCore.Tools
 ```
 ##  Step 2 : Setting up entities/models 
-The entity class will consist of the object that your storing. 
+The entity class will consist of the object that your storing. This model is built using a set of [conventions](https://www.entityframeworktutorial.net/efcore/conventions-in-ef-core.aspx) that look for common patterns. And when making your model you will see that some that show a One-to-Many, Many-to-Many, or even One-to-One realtionship.
+- Here is an example of the object we are creating in JS:
+```
+ {
+         "name": "Agnes Memorial Church Of God In Christ",
+         "area": "Oakland",
+         "streetAddress": "2372 International Boulevard",
+         "city": "Oakland",
+         "state": "CA",
+         "zipcode": 94601,
+         "country": "United States",
+         "latitude": 37.783047,
+         "longitude": -122.234238,
+         "tags": [
+             "Food Pantry"
+         ],
+         "phone": "510-533-1101",
+         "website": "http://agnesmemorialchurch.com",
+         "description": "Partners with the City of Oakland's Hunger Relief Program. Serves as a distribution food pantry site for the Lower San Antonio District.",
+         "businessHours": [
+             {
+                 "day": "Monday",
+                 "open": null,
+                 "close": "12:30"
+             },
+             {
+                 "day": "Tuesday",
+                 "open": "9:am",
+                 "close": "12:30"
+             },
+             {
+                 "day": "Wednesday",
+                 "open": "9:am",
+                 "close": "12:30"
+             },
+             {
+                 "day": "Thursday",
+                 "open": "9:am",
+                 "close": "12:30"
+             },
+             {
+                 "day": "Friday",
+                 "open": "9:am",
+                 "close": "12:30"
+             },
+             {
+                 "day": "Saturday",
+                 "open": null,
+                 "close": null
+             },
+             {
+                 "day": "Sunday",
+                 "open": null,
+                 "close": null
+             }
+         ]
+     },
+```
 
 ### Add a entity/model class
 -	In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Models.
@@ -78,21 +135,21 @@ public class FoodResource
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? Description { get; set; }
-    public ICollection<ResourceTags> ResourceTags { get; set; }
-    public ICollection<BusinessHours> BusinessHours { get; set; }
+    public ICollection<ResourceTags> ResourceTags { get; set; } // Many-to-Many relationship with Tag
+    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
 }
 ```
-- Repeat those steps to add the rest below:
+The table for ResourceTags creates a [many-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) between FoodResource and Tag by linking TagId and FoodResourceId. This is because FoodResource can have have many associated tags, and each Tag can in turn be associated with any number of FoodResource giving us the [one-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many).
+- Should look something like:
 ```
 public class ResourceTags
 {
     public int TagId { get; set; }
-    public Tag Tag { get; set; }
+    public Tag Tag { get; set; } // Many-to-One relationship with Tag
     public int FoodResourceId { get; set; }
-    public FoodResource FoodResource { get; set; }
+    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
 }
 ```
-This table creates a many-to-many relationship between FoodResource and Tag by linking TagId and FoodResourceId.
 
 ```
 public class Tag
@@ -100,37 +157,42 @@ public class Tag
     public int Id { get; set; }
     public string Name { get; set; }
 
-    public ICollection<ResourceTags> ResourceTags { get; set; }
+    public ICollection<ResourceTags> ResourceTags { get; set; }  // One-to-Many relationship with ResourceTags
 }
 ```
-This relates to the Tag table through the ResourceTags table. In this case, "FoodResource" would be a record in the Tag table.
+Now the table for BusinessHours table gives us a one-to-many relationship, because Each entry in the businessHours array would be a record in this table.
 
+- Should look something like:
 ```
 public class BusinessHours
 {
     public int BusinessHourID { get; set; }
     public int FoodResourceID { get; set; }
-    public FoodResource FoodResource { get; set; }
+    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
     public int DayId { get; set; }
-    public Days Day { get; set; }
+    public Days Day { get; set; } // Many-to-One relationship with Days
     public string OpenTime { get; set; }
     public string CloseTime { get; set; }
 }
 ```
-This relates to the BusinessHours table. Each entry in the businessHours array would be a record in this table.
+The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table using DayId.
 
+- Should look something like:
 ```
 public class Days
 {
     public int Id { get; set; }
     public string Name { get; set; }
 
-    public ICollection<BusinessHours> BusinessHours { get; set; }
+    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
 }
 ```
-The Days table would hold the day names ("Monday", "Tuesday", etc.), and the BusinessHours table would reference the Days table using DayId.
+## Step 3: Configuring a Model 
+The model can then be customized using mapping attributes (also known as data annotations) and/or calls to the ModelBuilder methods (also known as fluent API) in OnModelCreating, both of which will override the configuration performed by conventions.
+### Data Annotations
+### Fluent API
 
-##  Step 3 : Database Integration 
+##  Step 4: Database Integration 
 The database context is the main class that coordinates Entity Framework functionality for a data model. This will act as the “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
 - In Solution Explorer, right-click the project.
 - Select Add > New Folder > Name the folder Data.
@@ -223,13 +285,13 @@ namespace LADP__EFC
 }
 ```
 
-##  Step 4 : Setting up the Repository
+##  Step 5 : Setting up the Repository
 This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
 In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Repository.
 -	Right-click the Repository folder and select Add > Interface. Name the Interface IRepositoryToDoItems and click Add.
 -	Should look something like:
 
-##  Step 5 : Set Up Controllers
+##  Step 6 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
 One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just o get you started as you will need to make updates which is why it is optional. 
