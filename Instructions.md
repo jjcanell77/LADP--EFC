@@ -1,6 +1,8 @@
 # Entity Framework Core Setup (controller-based) Steps
+
 ## What is EFC (Entity Framework Core)?
 Most non-trivial web applications will need to reliably run operations on data, such as create, read, update, and delete (CRUD). They'll also need to persist any changes made by these operations between application restarts. Although there are various options for persisting data in .NET applications, Entity Framework (EF) Core is a user-friendly solution and a great fit for many .NET applications.
+
 ### Understanding EF Core
 -	EF Core is a lightweight, extensible, open source, and cross-platform data access technology for .NET applications.
 -	EF Core can serve as an ORM (object-relational mapper), which:
@@ -11,15 +13,6 @@ eliminates the need for most of the data-access code that typically needs to be 
 -	EFC uses LINQ methods to query data from the database using strongly types expressions
 -	EFC is responsibilities range from opening the connection to the database, reading of data and mapping the data from SQL back to the .Net Entity
 -	Objects (DbSet) which passes the DB context back to us
-
-### [Fluent API in Entity Framework Core](https://www.entityframeworktutorial.net/efcore/fluent-api-in-entity-framework-core.aspx)
-The Fluent API in Entity Framework Core (EF Core) is a way to configure the model classes and their relationships using a fluent syntax. This approach is an alternative to using data annotations and provides more control over the configuration.
-- Model Configuration: Configures an EF model to database mappings. Configures the default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
-- Entity Configuration: Configures entity to table and relationships mapping e.g. PrimaryKey, AlternateKey, Index, table name, one-to-one, one-to-many, many-to-many relationships etc.
-- Property Configuration: Configures property to column mapping e.g. column name, default value, nullability, Foreignkey, data type, concurrency column etc.
-
-### The context class
-This application has only one entity class, but most applications will have multiple entity classes. The context class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection.
 
 ### Perform CRUD operations with EF Core
 After EF Core is configured, you can use it to perform CRUD operations on your entity classes. Then, you can develop against C# classes, delegating the database operations to the context class. Database providers in turn translate it to database-specific query language. An example is SQL for a relational database. Queries are always executed against the database, even if the entities returned in the result already exist in the context.
@@ -189,11 +182,165 @@ public class Days
 ```
 ## Step 3: Configuring a Model 
 The model can then be customized using mapping attributes (also known as data annotations) and/or calls to the ModelBuilder methods (also known as fluent API) in OnModelCreating, both of which will override the configuration performed by conventions.
-### Data Annotations
-### Fluent API
 
+### [Data Annotations/Mapping Atrributes](https://www.learnentityframeworkcore.com/configuration/data-annotation-attributes) (Optional if not using prefered Fluent API)
+Using atrributes are nice because they are applied directly to the domain model, so it is easy to see how the model is configured just by examining the class files. You may have remember using Some attributes, such as Required and StringLength are leveraged by client frameworks such as ASP.NET MVC to provide UI-based validation based on the specified configuration.
+- One of the cons to using Data Annotations is that it may not cover every type of configuration, and could result in you having to implement some Fluent API as well. This will split configurations to more than one location adding unecessary complexity. 
+- Here is an example of the entities:
+```
+[Table("FoodResource", Schema = "dbo")]
+public class FoodResource
+{
+    [Key]
+    [Column("Id", TypeName = "int")]
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(255)]
+    [Column("Name", TypeName = "nvarchar(255)")]
+    public string Name { get; set; }
+
+    [MaxLength(100)]
+    [Column("Area", TypeName = "nvarchar(100)")]
+    public string? Area { get; set; }
+
+    [Required]
+    [MaxLength(255)]
+    [Column("StreetAddress", TypeName = "nvarchar(255)")]
+    public string StreetAddress { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    [Column("City", TypeName = "nvarchar(100)")]
+    public string City { get; set; }
+
+    [Required]
+    [MaxLength(2)]
+    [Column("State", TypeName = "nvarchar(2)")]
+    public string State { get; set; }
+
+    [Required]
+    [MaxLength(10)]
+    [Column("Zipcode", TypeName = "varchar(10)")]
+    public string Zipcode { get; set; }
+
+    [MaxLength(50)]
+    [Column("Country", TypeName = "varchar(50)")]
+    public string? Country { get; set; }
+
+    [Column("Latitude", TypeName = "decimal(9, 6)")]
+    public decimal? Latitude { get; set; }
+
+    [Column("Longitude", TypeName = "decimal(9, 6)")]
+    public decimal? Longitude { get; set; }
+
+    [MaxLength(20)]
+    [Column("Phone", TypeName = "nvarchar(20)")]
+    public string? Phone { get; set; }
+
+    [MaxLength(255)]
+    [Column("Website", TypeName = "nvarchar(255)")]
+    public string? Website { get; set; }
+
+    [Column("Description", TypeName = "nvarchar(MAX)")]
+    public string? Description { get; set; }
+
+    public ICollection<ResourceTags> ResourceTags { get; set; } // Many-to-Many relationship with Tag
+
+    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+}
+```
+```
+[Table("ResourceTags", Schema = "dbo")]
+public class ResourceTags
+{
+    [Key, Column(Order = 0)]
+    [Column("TagId", TypeName = "int")]
+    public int TagId { get; set; }
+
+    [Key, Column(Order = 1)]
+    [Column("FoodResourceId", TypeName = "int")]
+    public int FoodResourceId { get; set; }
+
+    [ForeignKey("TagId")]
+    public Tag Tag { get; set; } // Many-to-One relationship with Tag
+
+    [ForeignKey("FoodResourceId")]
+    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
+}
+```
+```
+[Table("Tag", Schema = "dbo")]
+public class Tag
+{
+    [Key]
+    [Column("Id", TypeName = "int")]
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    [Column("Name", TypeName = "nvarchar(100)")]
+    public string Name { get; set; }
+
+    public ICollection<ResourceTags> ResourceTags { get; set; } // One-to-Many relationship with ResourceTags
+}
+```
+```
+[Table("BusinessHours", Schema = "dbo")]
+public class BusinessHours
+{
+    [Key]
+    [Column("BusinessHourID", TypeName = "int")]
+    public int BusinessHourID { get; set; }
+
+    [Required]
+    [Column("FoodResourceID", TypeName = "int")]
+    public int FoodResourceID { get; set; }
+
+    [ForeignKey("FoodResourceID")]
+    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
+
+    [Required]
+    [Column("DayId", TypeName = "int")]
+    public int DayId { get; set; }
+
+    [ForeignKey("DayId")]
+    public Days Day { get; set; } // Many-to-One relationship with Days
+
+    [MaxLength(10)]
+    [Column("OpenTime", TypeName = "nvarchar(10)")]
+    public string OpenTime { get; set; }
+
+    [MaxLength(10)]
+    [Column("CloseTime", TypeName = "nvarchar(10)")]
+    public string CloseTime { get; set; }
+}
+```
+```
+[Table("Days", Schema = "dbo")]
+public class Days
+{
+    [Key]
+    [Column("Id", TypeName = "int")]
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(10)]
+    [Column("Name", TypeName = "nchar(10)")]
+    public string Name { get; set; }
+
+    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+}
+```
+### [Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api)
+This approach is an alternative to using data annotations and provides more control over the configuration with the plus of being able to be located in one place, away from the model classes. This is applied inside of the database context class to entities/models properties via chained methods. 
+- These methods can be in conjuntion with Data annotations to cover areas that are missed. such as default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
+- Also can handle entity to table and relationships mapping e.g. PrimaryKey, AlternateKey, Index, table name, one-to-one, one-to-many, many-to-many relationships etc.
+- And lastly, provide property onfiguration meaning column name, default value, nullability, Foreignkey, data type, concurrency column etc.
+- This implementation will take place after Step 4 below.
+  
 ##  Step 4: Database Integration 
-The database context is the main class that coordinates Entity Framework functionality for a data model. This will act as the “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
+The database context is the main class that coordinates Entity Framework functionality for a data model. This class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection. Acting sort of like a “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
 - In Solution Explorer, right-click the project.
 - Select Add > New Folder > Name the folder Data.
 -	Right-click the Data folder and select Add > Class. Name the class DataContext and click Add.
