@@ -39,7 +39,7 @@ Make sure you have the latest installed:
 -	Should see ‘Browse’, ‘Installed’, ‘Updates’, and ‘Consolidate’
 -	Make sure ‘Browse’ in this window is selected
 -	In the search bar search and install the following:
- ```
+ ``` { attributes go here }
 Microsoft.EntityFrameworkCore
 ```
 ```
@@ -48,8 +48,10 @@ Microsoft.EntityFrameworkCore.SqlServer
 ```
 Microsoft.EntityFrameworkCore.Tools
 ```
+
 ##  Step 2 : Setting up entities/models 
 The entity class will consist of the object that your storing. This model is built using a set of [conventions](https://www.entityframeworktutorial.net/efcore/conventions-in-ef-core.aspx) that look for common patterns. And when making your model you will see that some that show a One-to-Many, Many-to-Many, or even One-to-One realtionship.
+
 - Here is an example of the object we are creating in JS:
 ```
  {
@@ -180,7 +182,101 @@ public class Days
     public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
 }
 ```
-## Step 3: Configuring a Model 
+ Now Depending on how we intend to configure these models we will be returning to the classes in step 4. 
+ 
+##  Step 3: Database Integration 
+The database context is the main class that coordinates Entity Framework functionality for a data model. This class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection. Acting sort of like a “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
+- In Solution Explorer, right-click the project.
+- Select Add > New Folder > Name the folder Data.
+-	Right-click the Data folder and select Add > Class. Name the class DataContext and click Add.
+-	Enter the following code:
+```
+using LADP__EFC.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace LADP__EFC.Data
+{
+    public class DataContext: DbContext
+    {
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        {
+        }
+        public DbSet<TodoItem> TodoItems { get; set; } = null!;
+        public DbSet<FoodResource> FoodResources { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<ResourceTags> ResourceTags { get; set; }
+        public DbSet<BusinessHours> BusinessHours { get; set; }
+        public DbSet<Days> Days { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+          /*Leave this empty for now*/
+        }
+  }
+```
+### Register the database context
+In ASP.NET Core, services such as the DB context must be registered with the dependency injection (DI) container. The container provides the service to controllers.
+- Update Program.cs with something like:
+```
+using Microsoft.EntityFrameworkCore;
+using LADP__EFC.Data;
+
+namespace LADP__EFC
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+
+            // Add services to the container.
+            builder.Services.AddControllers();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddDbContext<DataContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+            });
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            app.Run();
+        }
+    }
+}
+```
+### Add Connection String
+-	In Solution Explorer, open appsettings.json. 
+-	Go ahead an add the connection string. 
+-	Should look something like:
+```
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Enter Connection Strring Here"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+```
+## Step 4: Configuring a Model 
 The model can then be customized using mapping attributes (also known as data annotations) and/or calls to the ModelBuilder methods (also known as fluent API) in OnModelCreating, both of which will override the configuration performed by conventions.
 
 ### [Data Annotations/Mapping Atrributes](https://www.learnentityframeworkcore.com/configuration/data-annotation-attributes) (Optional if not using prefered Fluent API)
@@ -332,113 +428,124 @@ public class Days
     public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
 }
 ```
-### [Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api)
+### [Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api) (Optional if not using Data Annotations/Mapping Atrributes)
 This approach is an alternative to using data annotations and provides more control over the configuration with the plus of being able to be located in one place, away from the model classes. This is applied inside of the database context class to entities/models properties via chained methods. 
 - These methods can be in conjuntion with Data annotations to cover areas that are missed. such as default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
 - Also can handle entity to table and relationships mapping e.g. PrimaryKey, AlternateKey, Index, table name, one-to-one, one-to-many, many-to-many relationships etc.
 - And lastly, provide property onfiguration meaning column name, default value, nullability, Foreignkey, data type, concurrency column etc.
-- This implementation will take place after Step 4 below.
+
+#### The steps:
+Adding an entity to OnModelCreating method inside the DataContext Class we made ealier. Starting with FoodResource using the Totable method to specify the name of the database table that the entity should map to.
+- Should look like this:
+```
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+   
+    modelBuilder.Entity<FoodResource>(entity =>
+    {
+        entity.ToTable("FoodResource");
+    });
+}
+```
+
+Now using the [HasKey](https://www.learnentityframeworkcore.com/configuration/fluent-api/haskey-method) method is used to denote the property that uniquely identifies an entity Primary Key field in a database:
+- Add this right after the first entry inside FoodResource:
+```
+ entity.HasKey(e => e.Id).HasName("PK_FoodResource");
+```
+
+Entity Framework Core provides a range of options for configuring entity [properties using the Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api/property-configuration). These can include column types, names, if required, length, and couple more. 
+- Add this right after the our last entry inside FoodResource:
+```
+entity.Property(e => e.Name).IsRequired().HasMaxLength(255).HasColumnName("Name").HasColumnType("nvarchar(255)");
+```
+
+Using these steps you should be able to fill out the rest of the FoodResource Entity
+- Should end up like this:
+```
+modelBuilder.Entity<FoodResource>(entity =>
+{
+ entity.ToTable("FoodResource");
+    entity.HasKey(e => e.Id).HasName("PK_FoodResource");
+    entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
+    entity.Property(e => e.Name).IsRequired().HasMaxLength(255).HasColumnName("Name").HasColumnType("nvarchar(255)");
+    entity.Property(e => e.Area).HasMaxLength(100).HasColumnName("Area").HasColumnType("nvarchar(100)");
+    entity.Property(e => e.StreetAddress).IsRequired().HasMaxLength(255).HasColumnName("StreetAddress").HasColumnType("nvarchar(255)");
+    entity.Property(e => e.City).IsRequired().HasMaxLength(100).HasColumnName("City").HasColumnType("nvarchar(100)");
+    entity.Property(e => e.State).IsRequired().HasMaxLength(2).HasColumnName("State").HasColumnType("nvarchar(2)");
+    entity.Property(e => e.Zipcode).IsRequired().HasMaxLength(50).HasColumnName("Zipcode").HasColumnType("varchar(50)");
+    entity.Property(e => e.Country).HasMaxLength(100).HasColumnName("Country").HasColumnType("nvarchar(100)");
+    entity.Property(e => e.Latitude).IsRequired().HasColumnName("Latitude").HasColumnType("decimal(9, 6)");
+    entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude").HasColumnType("decimal(9, 6)");                    
+    entity.Property(e => e.Phone).HasMaxLength(20).HasColumnName("Phone").HasColumnType("nvarchar(20)");
+    entity.Property(e => e.Website).HasMaxLength(255).HasColumnName("Website").HasColumnType("nvarchar(255)");
+    entity.Property(e => e.Description).HasColumnName("Description").HasColumnType("nvarchar(MAX)");
+});
+```
+
+The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship.
+- One to One example would look soemthing like this:
+```
+  public class SampleContext : DbContext
+{
+    public DbSet<Author> Authors { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Author>()
+            .HasOne(a => a.Biography)
+            .WithOne(b => b.Author);
+    }
+}
+public class Author
+{
+    public int AuthorId { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public AuthorBiography Biography { get; set; }
+}
+public class AuthorBiography
+{
+    public int AuthorBiographyId { get; set; }
+    public string Biography { get; set; }
+    public int AuthorId { get; set; }
+    public Author Author { get; set; }
+}
+```
+
+With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship.
+- One to Many example would look soemthing like this:
+```
+  public class SampleContext : DbContext
+{
+    public DbSet<Employee> Employees { get; set; }
+    public DbSet<Company> Companies { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Employee>()
+        .HasOne(e => e.Company)
+        .WithMany(c => c.Employees);
+    }
+public class Company
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public ICollection<Employee> Employees { get; set; }
+}
+public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public Company Company { get; set; }
+}
+```
+
+- Many to One
+- Many to Many
   
-##  Step 4: Database Integration 
-The database context is the main class that coordinates Entity Framework functionality for a data model. This class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection. Acting sort of like a “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
-- In Solution Explorer, right-click the project.
-- Select Add > New Folder > Name the folder Data.
--	Right-click the Data folder and select Add > Class. Name the class DataContext and click Add.
--	Enter the following code:
-```
-using LADP__EFC.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace LADP__EFC.Data
-{
-    public class DataContext: DbContext
-    {
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
-        {
-        }
-        public DbSet<TodoItem> TodoItems { get; set; } = null!;
-        public DbSet<FoodResource> FoodResources { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<ResourceTags> ResourceTags { get; set; }
-        public DbSet<BusinessHours> BusinessHours { get; set; }
-        public DbSet<Days> Days { get; set; }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-        /*Leave this empty for now*/
-        }
-  }
-```
-### Register the database context
-In ASP.NET Core, services such as the DB context must be registered with the dependency injection (DI) container. The container provides the service to controllers.
-- Update Program.cs with something like:
-```
-using Microsoft.EntityFrameworkCore;
-using LADP__EFC.Data;
-
-namespace LADP__EFC
-{
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<DataContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-
-            });
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
-        }
-    }
-}
-```
-### Add Connection String
--	In Solution Explorer, open appsettings.json. 
--	Go ahead an add the connection string. 
--	Should look something like:
-```
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Enter Connection Strring Here"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*"
-}
-```
-
-##  Step 5 : Setting up the Repository
-This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
-In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Repository.
--	Right-click the Repository folder and select Add > Interface. Name the Interface IRepositoryToDoItems and click Add.
--	Should look something like:
-
-##  Step 6 : Set Up Controllers
+Lets take the Entity of Business Hours for example as it contains two Many to One realtionships.
+  
+##  Step 5 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
 One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just o get you started as you will need to make updates which is why it is optional. 
@@ -485,3 +592,8 @@ namespace LADP__EFC.Controllers
         }
 
 ```
+## Step 6: Setting up the Repository
+This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
+In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Repository.
+-	Right-click the Repository folder and select Add > Interface. Name the Interface IRepositoryToDoItems and click Add.
+-	Should look something like:
