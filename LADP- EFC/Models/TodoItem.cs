@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LADP__EFC.Models;
 
-public partial class TodoItem
+public class TodoItem
 {
     public int Id { get; set; }
 

@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using LADP__EFC.Models;
-using LADP__EFC.Data;
 using LADP__EFC.Repository;
 
 namespace LADP__EFC.Controllers

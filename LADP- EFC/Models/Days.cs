@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LADP__EFC.Models;
 
-public class Tag
+public class Days
 {
     public int Id { get; set; }
     public string Name { get; set; }
 
-    public ICollection<ResourceTags> ResourceTags { get; set; }
+    public ICollection<BusinessHours> BusinessHours { get; set; }
 }
