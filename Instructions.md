@@ -118,42 +118,42 @@ The entity class will consist of the object that your storing. This model is bui
 public class FoodResource
 {
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
     public string? Area { get; set; }
-    public string StreetAddress { get; set; }
-    public string City { get; set; }
-    public string State { get; set; }
-    public string Zipcode { get; set; }
+    public string StreetAddress { get; set; } = null!;
+    public string City { get; set; } = null!;
+    public string State { get; set; } = null!;
+    public string Zipcode { get; set; } = null!;
     public string? Country { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? Description { get; set; }
-    public ICollection<ResourceTags> ResourceTags { get; set; } // Many-to-Many relationship with Tag
-    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+    public List<ResourceTags> ResourceTags { get; } = []; // One-to-Many relationship with Tag
+    public List<BusinessHours> BusinessHours { get; set; } = [];// One-to-Many relationship with BusinessHours
 }
 ```
-The table for ResourceTags creates a [many-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) between FoodResource and Tag by linking TagId and FoodResourceId. This is because FoodResource can have have many associated tags, and each Tag can in turn be associated with any number of FoodResource giving us the [one-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many).
+The table for ResourceTags creates a [Many-to-One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship between FoodResource and Tag by linking TagId and FoodResourceId. This is because FoodResource can have have many associated tags, and each Tag can in turn be associated with any number of FoodResource giving us the [one-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many).
 - Should look something like:
 ```
 public class ResourceTags
 {
     public int TagId { get; set; }
-    public Tag Tag { get; set; } // Many-to-One relationship with Tag
     public int FoodResourceId { get; set; }
-    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
+    public Tag Tag { get; set; } = null!; // Many-to-One relationship with Tag
+    public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
 }
 ```
 
 ```
-public class Tag
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
+ public class Tag
+ {
+     public int Id { get; set; }
+     public string Name { get; set; } = null!;
 
-    public ICollection<ResourceTags> ResourceTags { get; set; }  // One-to-Many relationship with ResourceTags
-}
+     public List<ResourceTags> ResourceTags { get; } = [];  // One-to-Many relationship with ResourceTags
+ }
 ```
 Now the table for BusinessHours table gives us a one-to-many relationship, because Each entry in the businessHours array would be a record in this table.
 
@@ -435,7 +435,7 @@ This approach is an alternative to using data annotations and provides more cont
 - And lastly, provide property onfiguration meaning column name, default value, nullability, Foreignkey, data type, concurrency column etc.
 
 #### The steps:
-Adding an entity to OnModelCreating method inside the DataContext Class we made ealier. Starting with FoodResource using the Totable method to specify the name of the database table that the entity should map to.
+Adding an entity to OnModelCreating method inside the DataContext Class we made ealier. Starting with FoodResource using the ToTable method to specify the name of the database table that the entity should map to.
 - Should look like this:
 ```
 protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -483,8 +483,8 @@ modelBuilder.Entity<FoodResource>(entity =>
 });
 ```
 
-The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship.
-- One to One example would look soemthing like this:
+The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship. It is never necessary to configure a relationship twice, once starting from the principal, and then again starting from the dependent. Also, attempting to configure the principal and dependent halves of a relationship separately generally does not work. Choose to configure each relationship from either one end or the other and then write the configuration code only once.
+- [One to One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) example would look soemthing like this:
 ```
   public class SampleContext : DbContext
 {
@@ -513,37 +513,94 @@ public class AuthorBiography
 }
 ```
 
-With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship.
-- One to Many example would look soemthing like this:
+With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship. The example below has two one-to-many relationships, one for each of the foreign keys defined in the join table. This realtionship is made up of:
+- One or more primary or alternate key properties on the principal entity; that is the "one" end of the relationship.
+- One or more foreign key properties on the dependent entity; that is the "many" end of the relationship.
+- Optionally, a collection navigation on the principal entity referencing the dependent entities.
+- Optionally, a reference navigation on the dependent entity referencing the principal entity.
+- [One to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) example would look soemthing like this:
 ```
   public class SampleContext : DbContext
 {
-    public DbSet<Employee> Employees { get; set; }
-    public DbSet<Company> Companies { get; set; }
+    public DbSet<FoodResource> FoodResource { get; set; }
+    public DbSet<ResourceTags> ResourceTags { get; set; }
+    public DbSet<Tag> Tag { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Employee>()
-        .HasOne(e => e.Company)
-        .WithMany(c => c.Employees);
+        modelBuilder.Entity<ResourceTags>(entity =>
+        {
+            entity.ToTable("ResourceTags");
+            entity.HasKey(e => new { e.TagId, e.FoodResourceId });
+            entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired();
+            entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired();
+        });
     }
-public class Company
+public class FoodResource
 {
     public int Id { get; set; }
-    public string Name { get; set; }
-    public ICollection<Employee> Employees { get; set; }
+    // etc....
+    public List<ResourceTags> ResourceTags { get; } = []; // Collection navigation containing dependents
 }
-public class Employee
+public class ResourceTags
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public Company Company { get; set; }
+    public int TagId { get; set; } // Required foreign key property
+    public int FoodResourceId { get; set; } // Required foreign key property
+    public Tag Tag { get; set; } = null!; // Required reference navigation to principal
+    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
 }
+ public class Tag
+ {
+     public int Id { get; set; }
+     public string Name { get; set; } = null!;
+
+     public List<ResourceTags> ResourceTags { get; } = [];  // Collection navigation containing dependents
+ }
 ```
 
-- Many to One
-- Many to Many
+Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. The thing is the join table or ResourceTags in this case is unique to [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships. If you check the documentation that means theres a alot of ways to go about this. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
+
+- [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) example would look soemthing like this:
+```
+  public class SampleContext : DbContext
+{
+    public DbSet<FoodResource> FoodResource { get; set; }
+    public DbSet<ResourceTags> ResourceTags { get; set; }
+    public DbSet<Tag> Tag { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ResourceTags>(entity =>
+        {
+            entity.ToTable("ResourceTags");
+            entity.HasKey(e => new { e.TagId, e.FoodResourceId });
+            entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired();
+            entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired();
+        });
+    }
+public class FoodResource
+{
+    public int Id { get; set; }
+    // etc....
+    public List<ResourceTags> ResourceTags { get; set; } = []; // Collection navigation containing dependents
+}
+public class ResourceTags
+{
+    public int TagId { get; set; } // Required foreign key property
+    public int FoodResourceId { get; set; } // Required foreign key property
+    public Tag Tag { get; set; } = null!; // Required reference navigation to principal
+    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
+}
+ public class Tag
+ {
+     public int Id { get; set; }
+     public string Name { get; set; } = null!;
+
+     public List<ResourceTags> ResourceTags { get; set; } = [];  // Collection navigation containing dependents
+ }
+```
+In the example above we handled an optional use case where we could use a many-to-many relationship but this changes when we get to the BusinessHours table as it is (Many-to-many and join table with payload)[https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many]. 
+- Here is how you would handle this situation:
   
-Lets take the Entity of Business Hours for example as it contains two Many to One realtionships.
+
   
 ##  Step 5 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
@@ -593,7 +650,7 @@ namespace LADP__EFC.Controllers
 
 ```
 ## Step 6: Setting up the Repository
-This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
+Using the repository pattern in Entity Framework 8 helps create a clean separation between the data access and business logic layers. This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
 In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Repository.
 -	Right-click the Repository folder and select Add > Interface. Name the Interface IRepositoryToDoItems and click Add.
 -	Should look something like:
