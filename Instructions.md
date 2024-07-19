@@ -557,9 +557,40 @@ public class ResourceTags
  }
 ```
 
-Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. The thing is the join table or ResourceTags in this case is unique to [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships. If you check the documentation that means theres a alot of ways to go about this. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
+Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentationt there a alot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
 
-- [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) example would look soemthing like this:
+- Here is an optional way to acheive a Many-to-Many relationship example:
+```
+  public class SampleContext : DbContext
+{
+    public DbSet<FoodResource> FoodResource { get; set; }
+    public DbSet<Tag> Tag { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FoodResource>(entity =>
+        {
+            entity.ToTable("FoodResource");
+            // etc....
+            entity.HasMany(e => e.Tags).WithMany(e => e.FoodResources);
+        });
+    }
+public class FoodResource
+{
+    public int Id { get; set; }
+    // etc....
+    public List<Tag> Tags { get; } = []; // Collection navigation containing dependents
+}
+ public class Tag
+ {
+     public int Id { get; set; }
+     public string Name { get; set; } = null!;
+
+     public List<FoodResource> FoodResources { get; } = [];  // Collection navigation containing dependents
+ }
+```
+<!--
+In the examples so far, the join table has been used only to store the foreign key pairs representing each association. However, it can also be used to store information about the association--for example, the time it was created.This is the case when we get to the BusinessHours table as it is [Many-to-many and join table with payload](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many).
+- Here is how you would handle this situation:
 ```
   public class SampleContext : DbContext
 {
@@ -580,9 +611,9 @@ public class FoodResource
 {
     public int Id { get; set; }
     // etc....
-    public List<ResourceTags> ResourceTags { get; set; } = []; // Collection navigation containing dependents
+    public List<BusinessHours> BusinessHours { get; } = []; // Collection navigation containing dependents
 }
-public class ResourceTags
+public class BusinessHours
 {
     public int TagId { get; set; } // Required foreign key property
     public int FoodResourceId { get; set; } // Required foreign key property
@@ -594,14 +625,12 @@ public class ResourceTags
      public int Id { get; set; }
      public string Name { get; set; } = null!;
 
-     public List<ResourceTags> ResourceTags { get; set; } = [];  // Collection navigation containing dependents
+     public List<ResourceTags> ResourceTags { get; } = [];  // Collection navigation containing dependents
  }
 ```
-In the example above we handled an optional use case where we could use a many-to-many relationship but this changes when we get to the BusinessHours table as it is (Many-to-many and join table with payload)[https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many]. 
-- Here is how you would handle this situation:
-  
+-->
 
-  
+#### Go ahead and finish up the rest of the configurations and if you get stuck please refere to the [code](https://github.com/jjcanell77/LADP--EFC/tree/master/LADP-%20EFC) for help.
 ##  Step 5 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
