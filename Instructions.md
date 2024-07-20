@@ -142,6 +142,7 @@ public class ResourceTags
     public int TagId { get; set; }
     public int FoodResourceId { get; set; }
     public Tag Tag { get; set; } = null!; // Many-to-One relationship with Tag
+
     public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
 }
 ```
@@ -161,25 +162,26 @@ Now the table for BusinessHours table gives us a one-to-many relationship, becau
 ```
 public class BusinessHours
 {
-    public int BusinessHourID { get; set; }
-    public int FoodResourceID { get; set; }
-    public FoodResource FoodResource { get; set; } // Many-to-One relationship with FoodResource
+    public int BusinessHourId { get; set; }
+    public int FoodResourceId { get; set; }
     public int DayId { get; set; }
-    public Days Day { get; set; } // Many-to-One relationship with Days
-    public string OpenTime { get; set; }
-    public string CloseTime { get; set; }
+    public string? OpenTime { get; set; }
+    public string? CloseTime { get; set; }
+
+    public Day Day { get; set; } = null!; // Many-to-One relationship with Days
+    public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
 }
 ```
 The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table using DayId.
 
 - Should look something like:
 ```
-public class Days
+public class Day
 {
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+    public List<BusinessHours> BusinessHours { get; set; } = []; // One-to-Many relationship with BusinessHours
 }
 ```
  Now Depending on how we intend to configure these models we will be returning to the classes in step 4. 
@@ -206,7 +208,7 @@ namespace LADP__EFC.Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<ResourceTags> ResourceTags { get; set; }
         public DbSet<BusinessHours> BusinessHours { get; set; }
-        public DbSet<Days> Days { get; set; }
+        public DbSet<Day> Day { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
           /*Leave this empty for now*/
@@ -588,6 +590,65 @@ public class FoodResource
      public List<FoodResource> FoodResources { get; } = [];  // Collection navigation containing dependents
  }
 ```
+
+When working with relationships there may also come a time when you want preserve dependent data or sepcidfy that they should be deleted as well. This is where the [onDelete](https://www.learnentityframeworkcore.com/configuration/fluent-api/ondelete-method) method comes in to play. 
+- Cascade means that dependents should be deleted
+- Restrict means that  dependents are unaffected
+- SetNull means that the foreign key values in dependent rows should update to NULL
+- Here is an example Referening BusinessHours and Day:
+```
+ public class SampleContext : DbContext
+{
+    public DbSet<FoodResource> FoodResource { get; set; }
+    public DbSet<BusinessHours> BusinessHours { get; set; }
+    public DbSet<Day> Day { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<BusinessHours>(entity =>
+        {
+            entity.ToTable("BusinessHours");
+            entity.HasKey(e => e.BusinessHourId).HasName("PK_BusinessHours");
+            entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID").HasColumnType("int");
+            entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours)
+              .HasForeignKey(d => d.FoodResourceId)
+              .OnDelete(DeleteBehavior.Cascade) // Cascade delete for FoodResource
+              .HasConstraintName("FK_BusinessHours_FoodResource");
+            entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID").HasColumnType("int");
+            entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours)
+              .HasForeignKey(d => d.DayId)
+              .OnDelete(DeleteBehavior.Restrict) // No action on delete for Day
+              .HasConstraintName("FK_BusinessHours_Days");
+            entity.Property(e => e.OpenTime).HasMaxLength(10).HasColumnName("OpenTime").HasColumnType("nvarchar(10)");
+            entity.Property(e => e.CloseTime).HasMaxLength(10).HasColumnName("CloseTime").HasColumnType("nvarchar(10)");
+        });
+    }
+public class FoodResource
+{
+    public int Id { get; set; }
+    // etc....
+
+    public List<BusinessHours> BusinessHours { get; } = []; // Collection navigation containing dependents
+}
+public class BusinessHours
+{
+    public int BusinessHourId { get; set; }
+    public int FoodResourceId { get; set; } // Required foreign key property
+    public int DayId { get; set; } // Required foreign key property
+    public string? OpenTime { get; set; }
+    public string? CloseTime { get; set; }
+
+    public Day Day { get; set; } = null!; // Required reference navigation to principal
+    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
+}
+ public class Day
+ {
+     public int Id { get; set; }
+     public string Name { get; set; } = null!;
+
+     public List<BusinessHours> BusinessHours { get; } = [];  // Collection navigation containing dependents
+ }
+```
+
 <!--
 In the examples so far, the join table has been used only to store the foreign key pairs representing each association. However, it can also be used to store information about the association--for example, the time it was created.This is the case when we get to the BusinessHours table as it is [Many-to-many and join table with payload](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many).
 - Here is how you would handle this situation:
@@ -603,8 +664,8 @@ In the examples so far, the join table has been used only to store the foreign k
         {
             entity.ToTable("ResourceTags");
             entity.HasKey(e => new { e.TagId, e.FoodResourceId });
-            entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired();
-            entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired();
+            entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired().HasConstraintName("FK_ResourceTags_FoodResource");
+            entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired().HasConstraintName("FK_ResourceTags_Tags");
         });
     }
 public class FoodResource
