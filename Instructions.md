@@ -691,56 +691,274 @@ public class BusinessHours
 ```
 -->
 
-#### Go ahead and finish up the rest of the configurations and if you get stuck please refere to the [code](https://github.com/jjcanell77/LADP--EFC/tree/master/LADP-%20EFC) for help.
+#### Go ahead and finish up the rest of the configurations and if you get stuck please refer to the [code](https://github.com/jjcanell77/LADP--EFC/tree/master/LADP-%20EFC) for help.
 ##  Step 5 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
 One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just o get you started as you will need to make updates which is why it is optional. 
-This template will Mark the class with the [ApiController] attribute, that indicates that the controller responds to web API requests. It also uses DI to inject the database context (TodoContext) into the controller. The database context is used in each of the CRUD methods in the controller.
+This template will Mark the class with the [ApiController] attribute, that indicates that the controller responds to web API requests. It also uses DI to inject the database context (DataContext) into the controller. The database context is used in each of the CRUD methods in the controller.
 -	Right-click the Controllers folder.
 -	Select Add > New Scaffolded Item.
 -	Select API Controller with actions, using Entity Framework, and then select Add.
--	Select TodoItem (TodoApi.Models) in the Model class.
--	Select TodoContext (TodoApi.Models) in the Data context class.
+-	Select FoodResource(LADP_EFC.Models) in the Model class.
+-	Select DataContext(LADP_EFC.Data) in the Data context class.
 -	Select Add.
--	Should look something like:
+-	Should look something like this but with logic in the methods:
 ```
 namespace LADP__EFC.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TodoItemsController : ControllerBase
+    public class FoodResourcesController : ControllerBase
     {
-        private readonly TodoContext _context;
-        public TodoItemsController(TodoContext context)
+        private readonly DataContext _context;
+
+        public FoodResourcesController(DataContext context)
         {
             _context = context;
         }
 
-        // GET: api/TodoItems
+        // GET: api/FoodResources
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodoItems()
-        {
-          return await _context.TodoItems.ToListAsync();
-        }
+        public async Task<ActionResult<IEnumerable<FoodResource>>> GetFoodResources(){}
 
-        // GET: api/TodoItems/5
+        // GET: api/FoodResources/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TodoItem> GetTodoItem(long id)
+        public async Task<ActionResult<FoodResource>> GetFoodResource(int id){}
+
+        // PUT: api/FoodResources/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutFoodResource(int id, FoodResource foodResource){}
+
+        // POST: api/FoodResources
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<FoodResource>> PostFoodResource(FoodResource foodResource)
+        {}
+
+        // DELETE: api/FoodResources/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFoodResource(int id)
+        {}
+
+        private bool FoodResourceExists(int id)
+        {}
+    }
+}
+```
+
+## Step 6: Setting up the Repository
+Using the repository pattern in Entity Framework Core helps create a clean separation between the data access and business logic layers. This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
+- In Solution Explorer, right-click the project.
+- Select Add > New Folder. Name the folder Repository.
+-	Right-click the Repository folder and Add > New Folder inside that called Interfaces.
+-	Should look something like:
+![Interface Folder](https://github.com/user-attachments/assets/19d18104-d078-4840-8fb4-6d970fd4c7fa)
+### The Interface
+The best way to think of an interface is a contract. By having this contract we can have bette control on change management and other breaking changes. 
+-	Right-click the Interfaces folder, then  Select Add > New Item...
+-	Select Add > Interface. Name the Interface IRepositoryFoodResource and click Add.
+-	Next your going to add you basic CRUD methods for now.
+-	Should look something like almost mimicing the methods in your base controller:
+```
+public interface IRepositoryFoodResource
+{
+    IEnumerable<FoodResource> GetFoodResources();
+    FoodResource GetFoodResource(int id);
+    FoodResource PutFoodResource(int id, FoodResource foodResource);
+    FoodResource PostFoodResource(FoodResource foodResource);
+    FoodResource DeleteFoodResource(int id);
+}
+```
+
+### The Repository/Service
+-	Right-click the Repository folder, then  Select Add > class...
+-	Name the class RepositoryFoodResource and click Add.
+-	Next your going to inherit from IRepositoryFoodResource.
+```
+public class RepositoryFoodResource : IRepositoryFoodResource
+{
+}
+```
+-	You should see an error appear on IRepositoryFoodResource.
+-	Right-click IRepositoryFoodResource, then  Select Lightbulb for Quick Refactotrings...
+-	 Select Implement the interface.
+-	 Should look like this:
+```
+public class RepositoryFoodResource : IRepositoryFoodResource
+{
+    public FoodResource DeleteFoodResource(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public FoodResource GetFoodResource(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<FoodResource> GetFoodResources()
+    {
+        throw new NotImplementedException();
+    }
+
+    public FoodResource PostFoodResource(FoodResource foodResource)
+    {
+        throw new NotImplementedException();
+    }
+
+    public FoodResource PutFoodResource(int id, FoodResource foodResource)
+    {
+        throw new NotImplementedException();
+    }
+}
+```
+- Just like when we scaffolded the controller this is only a starting point.
+- Next we need to link out Repository to our DataContext that holds our model configurations.
+- This is done by copying the constructor from the the controller to our Repository.
+-	 Should look like this:
+```
+private readonly DataContext _context;
+
+public RepositoryFoodResource(DataContext context)
+{
+    _context = context;
+}
+```
+- This should be pasted at the top of our Repository class.
+
+### Adjusting the Controller
+Because we now linked the the DataContext to our Repository, we now need to replace that logic to link the Repository to our controller. 
+- The same logic that we copied to the Repository shoud be replaced with:
+```
+private readonly IRepositoryFoodResource _repositroy;
+public FoodResourcesController(IRepositoryFoodResource repository)
+{
+    _repositroy = repository;
+}
+```
+- Go ahead ad swap all _context with _repositroy.
+- Followed by there corresponding CRUD method.
+- This is because all of the logic is moving the the Repository. 
+-	 Should look like this:
+```
+public class FoodResourcesController : ControllerBase
+{
+    private readonly IRepositoryFoodResource _repositroy;
+    public FoodResourcesController(IRepositoryFoodResource repository)
+    {
+        _repositroy = repository;
+    }
+
+    // GET: api/FoodResources
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<FoodResource>>> GetFoodResources()
+    {
+        var foodResource = _repositroy.GetFoodResources();
+        return Ok(foodResource);
+    }
+
+    // GET: api/FoodResources/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<FoodResource>> GetFoodResource(int id)
+    {
+        var foodResource =  _repositroy.GetFoodResource(id);
+
+        if (foodResource == null)
         {
-            var todoItem = await _context.TodoItems.FindAsync(id);
-
-            if (todoItem == null)
-            {
-                return NotFound();
-            }
-
-            return todoItem;
+            return NotFound();
         }
 
+        return foodResource;
+    }
+
+    // PUT: api/FoodResources/5
+    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutFoodResource(int id, FoodResource foodResource)
+    {
+        if (id != foodResource.Id)
+        {
+            return BadRequest();
+        }
+
+        var item = _repositroy.PutFoodResource(id, foodResource);
+        if (item != null)
+        {
+            return NoContent();
+        }
+        return NotFound();
+    }
+
+    // POST: api/FoodResources
+    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    [HttpPost]
+    public async Task<ActionResult<FoodResource>> PostFoodResource(FoodResource foodResource)
+    {
+        var item = _repositroy.PostFoodResource(foodResource);
+        return CreatedAtAction("GetFoodResource", new { id = foodResource.Id }, foodResource);
+    }
+
+    // DELETE: api/FoodResources/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteFoodResource(int id)
+    {
+        var item = _repositroy.DeleteFoodResource(id);
+        if (item == null)
+        {
+            return NotFound();
+        }
+        return NoContent();
+    }
+}
 ```
-## Step 6: Setting up the Repository
-Using the repository pattern in Entity Framework 8 helps create a clean separation between the data access and business logic layers. This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
-In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Repository.
--	Right-click the Repository folder and select Add > Interface. Name the Interface IRepositoryToDoItems and click Add.
+
+### Adding Repository to Dependency injection container
+In ASP.NET Core, the DI container provides several lifetimes for services: Singleton, Scoped, and Transient. Each has specific use cases, and choosing the correct lifetime is crucial for the application's performance and correctness.
+- A singletion is a single instance of the service is created and shared across the entire application lifecycle.
+- Scoped is a new instance of the service is created once per request and shared within that request.
+- Transientis a new instance of the service is created each time it is requested.
+
+For our project we will be implementing AddScoped into our Program.cs similar to how we add singletons in Sabio to add IRepositoryFoodResource.
 -	Should look something like:
+```
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Add services to the container.
+
+        // Add Repositories to the container.
+        builder.Services.AddScoped<IRepositoryFoodResource, RepositoryToDoItems>();
+        builder.Services.AddScoped<IRepositoryToDoItems, RepositoryToDoItems>();
+        builder.Services.AddControllers();
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+        builder.Services.AddDbContext<DataContext>(options =>
+        {
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+        });
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
+    }
+}
+```
