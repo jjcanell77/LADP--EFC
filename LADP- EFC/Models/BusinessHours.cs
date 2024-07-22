@@ -6,11 +6,12 @@ namespace LADP__EFC.Models;
 
 public class BusinessHours
 {
-    public int BusinessHourID { get; set; }
-    public int FoodResourceID { get; set; }
-    public FoodResource FoodResource { get; set; }
+    public int BusinessHourId { get; set; }
+    public int FoodResourceId { get; set; }
     public int DayId { get; set; }
-    public Days Day { get; set; }
-    public string OpenTime { get; set; }
-    public string CloseTime { get; set; }
+    public string? OpenTime { get; set; }
+    public string? CloseTime { get; set; }
+
+    public Day Day { get; set; } = null!; // Many-to-One relationship with Days
+    public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
 }

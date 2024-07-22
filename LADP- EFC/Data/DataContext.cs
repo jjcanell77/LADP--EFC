@@ -14,76 +14,59 @@ namespace LADP__EFC.Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<ResourceTags> ResourceTags { get; set; }
         public DbSet<BusinessHours> BusinessHours { get; set; }
-        public DbSet<Days> Days { get; set; }
+        public DbSet<Day> Days { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-            modelBuilder.Entity<BusinessHour>(entity =>
+            modelBuilder.Entity<BusinessHours>(entity =>
             {
-                entity.HasKey(e => e.BusinessHourId).HasName("PK__Business__D34018BC60B49B72");
-
-                entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID");
-                entity.Property(e => e.CloseTime).HasMaxLength(10);
-                entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID");
-                entity.Property(e => e.OpenTime).HasMaxLength(10);
-
-                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours)
-                    .HasForeignKey(d => d.DayId)
-                    .HasConstraintName("FK_BusinessHours_Days");
-
-                entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours)
-                    .HasForeignKey(d => d.FoodResourceId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__BusinessH__FoodR__7A3223E8");
+                entity.ToTable("BusinessHours");
+                entity.HasKey(e => e.BusinessHourId).HasName("PK_BusinessHours");
+                entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID").HasColumnType("int");
+                entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours).HasForeignKey(d => d.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_BusinessHours_FoodResource");
+                entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID").HasColumnType("int");
+                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours).HasForeignKey(d => d.DayId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BusinessHours_Days");
+                entity.Property(e => e.OpenTime).HasMaxLength(10).HasColumnName("OpenTime").HasColumnType("nvarchar(10)");
+                entity.Property(e => e.CloseTime).HasMaxLength(10).HasColumnName("CloseTime").HasColumnType("nvarchar(10)");
             });
             modelBuilder.Entity<Day>(entity =>
             {
-                entity.Property(e => e.Id).ValueGeneratedNever();
-                entity.Property(e => e.Name)
-                    .HasMaxLength(10)
-                    .IsFixedLength();
+                entity.ToTable("Days");
+                entity.HasKey(e => e.Id).HasName("PK_Days");
+                entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(10).HasColumnName("Id").HasColumnType("nchar(10)");
             });
             modelBuilder.Entity<FoodResource>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("PK__FoodReso__8E9865F8D149488B");
-
                 entity.ToTable("FoodResource");
-
-                entity.Property(e => e.Area).HasMaxLength(100);
-                entity.Property(e => e.City).HasMaxLength(100);
-                entity.Property(e => e.Country).HasMaxLength(100);
-                entity.Property(e => e.Latitude).HasColumnType("decimal(9, 6)");
-                entity.Property(e => e.Longitude).HasColumnType("decimal(9, 6)");
-                entity.Property(e => e.Name).HasMaxLength(255);
-                entity.Property(e => e.Phone).HasMaxLength(20);
-                entity.Property(e => e.State).HasMaxLength(2);
-                entity.Property(e => e.StreetAddress).HasMaxLength(255);
-                entity.Property(e => e.Website).HasMaxLength(255);
+                entity.HasKey(e => e.Id).HasName("PK_FoodResource");
+                entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(255).HasColumnName("Name").HasColumnType("nvarchar(255)");
+                entity.Property(e => e.Area).HasMaxLength(100).HasColumnName("Area").HasColumnType("nvarchar(100)");
+                entity.Property(e => e.StreetAddress).IsRequired().HasMaxLength(255).HasColumnName("StreetAddress").HasColumnType("nvarchar(255)");
+                entity.Property(e => e.City).IsRequired().HasMaxLength(100).HasColumnName("City").HasColumnType("nvarchar(100)");
+                entity.Property(e => e.State).IsRequired().HasMaxLength(2).HasColumnName("State").HasColumnType("nvarchar(2)");
+                entity.Property(e => e.Zipcode).IsRequired().HasMaxLength(50).HasColumnName("Zipcode").HasColumnType("varchar(50)");
+                entity.Property(e => e.Country).HasMaxLength(100).HasColumnName("Country").HasColumnType("nvarchar(100)");
+                entity.Property(e => e.Latitude).IsRequired().HasColumnName("Latitude").HasColumnType("decimal(9, 6)");
+                entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude").HasColumnType("decimal(9, 6)");
+                entity.Property(e => e.Phone).HasMaxLength(20).HasColumnName("Phone").HasColumnType("nvarchar(20)");
+                entity.Property(e => e.Website).HasMaxLength(255).HasColumnName("Website").HasColumnType("nvarchar(255)");
+                entity.Property(e => e.Description).HasColumnName("Description").HasColumnType("nvarchar(MAX)");
+            });
+            modelBuilder.Entity<ResourceTags>(entity =>
+            {
+                entity.ToTable("ResourceTags");
+                entity.HasKey(e => new { e.TagId, e.FoodResourceId });
+                entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired().HasConstraintName("FK_ResourceTags_FoodResource");
+                entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired().HasConstraintName("FK_ResourceTags_Tags");
             });
             modelBuilder.Entity<Tag>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("PK__Tags__657CFA4C36A466E9");
-
-                entity.Property(e => e.Tag1)
-                    .HasMaxLength(100)
-                    .HasColumnName("Tag");
-
-                entity.HasMany(d => d.FoodResources).WithMany(p => p.Tags)
-                    .UsingEntity<Dictionary<string, object>>(
-                        "ResourceTag",
-                        r => r.HasOne<FoodResource>().WithMany()
-                            .HasForeignKey("FoodResourceId")
-                            .OnDelete(DeleteBehavior.ClientSetNull)
-                            .HasConstraintName("FK_ResourceTags_FoodResource"),
-                        l => l.HasOne<Tag>().WithMany()
-                            .HasForeignKey("TagId")
-                            .OnDelete(DeleteBehavior.ClientSetNull)
-                            .HasConstraintName("FK_ResourceTags_Tags"),
-                        j =>
-                        {
-                            j.HasKey("TagId", "FoodResourceId");
-                            j.ToTable("ResourceTags");
-                        });
+                entity.ToTable("Tag");
+                entity.HasKey(e => e.Id).HasName("PK_Tag");
+                entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
+                entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("Name").HasColumnType("nvarchar(100)");
             });
         }
 
