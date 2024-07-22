@@ -1,6 +1,6 @@
 ﻿using LADP__EFC.Models;
 
-namespace LADP__EFC.Repository
+namespace LADP__EFC.Repository.Interfaces
 {
     public interface IRepositoryToDoItems
     {

@@ -23,18 +23,20 @@ namespace LADP__EFC.Data
                 entity.ToTable("BusinessHours");
                 entity.HasKey(e => e.BusinessHourId).HasName("PK_BusinessHours");
                 entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID").HasColumnType("int");
-                entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours).HasForeignKey(d => d.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_BusinessHours_FoodResource");
                 entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID").HasColumnType("int");
-                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours).HasForeignKey(d => d.DayId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BusinessHours_Days");
+                entity.Property(e => e.DayId).HasColumnName("DayId").HasColumnType("int");//
                 entity.Property(e => e.OpenTime).HasMaxLength(10).HasColumnName("OpenTime").HasColumnType("nvarchar(10)");
                 entity.Property(e => e.CloseTime).HasMaxLength(10).HasColumnName("CloseTime").HasColumnType("nvarchar(10)");
+
+                entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours).HasForeignKey(d => d.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_BusinessHours_FoodResource");
+                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours).HasForeignKey(d => d.DayId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BusinessHours_Days");
             });
             modelBuilder.Entity<Day>(entity =>
             {
                 entity.ToTable("Days");
                 entity.HasKey(e => e.Id).HasName("PK_Days");
                 entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(10).HasColumnName("Id").HasColumnType("nchar(10)");
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(10).HasColumnName("Name").HasColumnType("nchar(10)");
             });
             modelBuilder.Entity<FoodResource>(entity =>
             {
@@ -58,8 +60,11 @@ namespace LADP__EFC.Data
             {
                 entity.ToTable("ResourceTags");
                 entity.HasKey(e => new { e.TagId, e.FoodResourceId });
-                entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired().HasConstraintName("FK_ResourceTags_FoodResource");
-                entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired().HasConstraintName("FK_ResourceTags_Tags");
+                entity.Property(e => e.TagId).HasColumnName("TagId").HasColumnType("int");//
+                entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceId").HasColumnType("int");//
+
+                entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_ResourceTags_Tags");
+                entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_ResourceTags_FoodResource");
             });
             modelBuilder.Entity<Tag>(entity =>
             {

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using LADP__EFC.Data;
 using LADP__EFC.Repository;
+using LADP__EFC.Repository.Interfaces;
 
 namespace LADP__EFC
 {
@@ -13,7 +14,8 @@ namespace LADP__EFC
 
             // Add services to the container.
 
-            // RepositoryToDoItems dependency injection
+            // Add Repositories to the container.
+            builder.Services.AddScoped<IRepositoryFoodResource, RepositoryFoodResource>();
             builder.Services.AddScoped<IRepositoryToDoItems, RepositoryToDoItems>();
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
