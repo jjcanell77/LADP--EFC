@@ -60,8 +60,8 @@ namespace LADP__EFC.Data
             {
                 entity.ToTable("ResourceTags");
                 entity.HasKey(e => new { e.TagId, e.FoodResourceId });
-                entity.Property(e => e.TagId).HasColumnName("TagId").HasColumnType("int");//
-                entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceId").HasColumnType("int");//
+                //entity.Property(e => e.TagId).HasColumnName("TagId").HasColumnType("int");//
+                //entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceId").HasColumnType("int");//
 
                 entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_ResourceTags_Tags");
                 entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_ResourceTags_FoodResource");

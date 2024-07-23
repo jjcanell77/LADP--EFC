@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using LADP__EFC.Data;
 using LADP__EFC.Models;
 using LADP__EFC.Repository.Interfaces;
+using Azure;
 
 namespace LADP__EFC.Controllers
 {
@@ -23,10 +24,25 @@ namespace LADP__EFC.Controllers
 
         // GET: api/FoodResources
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<FoodResource>>> GetFoodResources()
+        public ActionResult<IEnumerable<FoodResource>> GetFoodResources()
         {
-            var foodResource = _repositroy.GetFoodResources();
-            return Ok(foodResource);
+            try
+            { 
+                var list = _repositroy.GetFoodResources();
+                if (list == null)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return Ok(list);
+                }
+            }
+            catch (Exception ex) 
+            {
+                int iCode = 500;
+                return StatusCode(iCode, ex.ToString());
+            }
         }
 
         // GET: api/FoodResources/5
@@ -64,10 +80,20 @@ namespace LADP__EFC.Controllers
         // POST: api/FoodResources
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<FoodResource>> PostFoodResource(FoodResource foodResource)
+        public ActionResult<FoodResource> PostFoodResource(FoodResource foodResource)
         {
-            var item = _repositroy.PostFoodResource(foodResource);
-            return CreatedAtAction("GetFoodResource", new { id = foodResource.Id }, foodResource);
+            ObjectResult result = null;
+            try 
+            {
+                var item = _repositroy.PostFoodResource(foodResource);
+                result = CreatedAtAction("GetFoodResource", new { id = foodResource.Id }, foodResource);
+            }
+            catch (Exception ex)
+            {
+                int iCode = 500;
+                result = StatusCode(iCode, ex.ToString());
+            }
+            return result;
         }
 
         // DELETE: api/FoodResources/5
