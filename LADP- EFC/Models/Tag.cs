@@ -8,6 +8,5 @@ public class Tag
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-
-    public List<ResourceTags> ResourceTags { get; } = [];  // One-to-Many relationship with ResourceTags
+    public List<FoodResource> FoodResource { get; } = [];  // Many-to-One relationship with ResourceTags
 }

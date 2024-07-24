@@ -18,6 +18,6 @@ public class FoodResource
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? Description { get; set; }
-    public List<ResourceTags> ResourceTags { get; } = []; // One-to-Many relationship with Tag
+    public List<Tag> Tags { get; } = []; // Many-to-Many relationship with Tag through the join table ResourceTag
     public List<BusinessHours> BusinessHours { get; set; } = [];// One-to-Many relationship with BusinessHours
 }

@@ -24,12 +24,11 @@ namespace LADP__EFC.Data
                 entity.HasKey(e => e.BusinessHourId).HasName("PK_BusinessHours");
                 entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID").HasColumnType("int");
                 entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID").HasColumnType("int");
-                entity.Property(e => e.DayId).HasColumnName("DayId").HasColumnType("int");//
+                //entity.Property(e => e.DayId).HasColumnName("DayId").HasColumnType("int");//
                 entity.Property(e => e.OpenTime).HasMaxLength(10).HasColumnName("OpenTime").HasColumnType("nvarchar(10)");
                 entity.Property(e => e.CloseTime).HasMaxLength(10).HasColumnName("CloseTime").HasColumnType("nvarchar(10)");
 
-                entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours).HasForeignKey(d => d.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_BusinessHours_FoodResource");
-                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours).HasForeignKey(d => d.DayId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BusinessHours_Days");
+                entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours).HasForeignKey("DayId").OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BusinessHours_Days");
             });
             modelBuilder.Entity<Day>(entity =>
             {
@@ -55,16 +54,16 @@ namespace LADP__EFC.Data
                 entity.Property(e => e.Phone).HasMaxLength(20).HasColumnName("Phone").HasColumnType("nvarchar(20)");
                 entity.Property(e => e.Website).HasMaxLength(255).HasColumnName("Website").HasColumnType("nvarchar(255)");
                 entity.Property(e => e.Description).HasColumnName("Description").HasColumnType("nvarchar(MAX)");
+
+                entity.HasMany(e => e.BusinessHours).WithOne(e => e.FoodResource).HasForeignKey(e => e.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_BusinessHours_FoodResource");
+                entity.HasMany(e => e.Tags).WithMany(e => e.FoodResource).UsingEntity<ResourceTags>(
+                                                                                              l => l.HasOne<Tag>().WithMany().HasForeignKey(e => e.TagId).HasConstraintName("FK_ResourceTags_Tags"),
+                                                                                              r => r.HasOne<FoodResource>().WithMany().HasForeignKey(e => e.FoodResourceId).HasConstraintName("FK_ResourceTags_FoodResource"));
             });
             modelBuilder.Entity<ResourceTags>(entity =>
             {
                 entity.ToTable("ResourceTags");
                 entity.HasKey(e => new { e.TagId, e.FoodResourceId });
-                //entity.Property(e => e.TagId).HasColumnName("TagId").HasColumnType("int");//
-                //entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceId").HasColumnType("int");//
-
-                entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_ResourceTags_Tags");
-                entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_ResourceTags_FoodResource");
             });
             modelBuilder.Entity<Tag>(entity =>
             {

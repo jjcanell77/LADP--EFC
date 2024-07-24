@@ -32,37 +32,41 @@ namespace LADP__EFC.Repository
                                 select ItemToDTO(item);
                 return todoItems.ToList();
             */
-            return _context.FoodResources
-                            .Include(r => r.ResourceTags).ThenInclude(rt => rt.Tag)
-                            .Include(b => b.BusinessHours).ThenInclude(bh => bh.Day)
-                            .ToList();
+            //return _context.FoodResources
+            //                .Include(r => r.ResourceTags).ThenInclude(rt => rt.Tag)
+            //                .Include(b => b.BusinessHours).ThenInclude(bh => bh.Day)
+            //                .ToList();
+            throw new NotImplementedException();
+
         }
 
         public FoodResource PostFoodResource(FoodResource foodResource)
         {
+            throw new NotImplementedException();
+
             // Ensure Tags are properly handled
-            foreach (var resourceTag in foodResource.ResourceTags)
-            {
-                var tag = _context.Tags.FindAsync(resourceTag.TagId);
-                if (tag == null)
-                {
-                    throw new Exception($"Tag with Id {resourceTag.TagId} does not exist.");
-                }
-                resourceTag.Tag = tag;
-            }
+            //foreach (var resourceTag in foodResource.ResourceTags)
+            //{
+            //    var tag = _context.Tags.FindAsync(resourceTag.TagId);
+            //    if (tag == null)
+            //    {
+            //        throw new Exception($"Tag with Id {resourceTag.TagId} does not exist.");
+            //    }
+            //    resourceTag.Tag = tag;
+            //}
 
-            // Ensure Days are properly handled for BusinessHours
-            foreach (var businessHour in foodResource.BusinessHours)
-            {
-                var day = _context.Days.FindAsync(businessHour.DayId);
-                if (day == null)
-                {
-                    throw new Exception($"Day with Id {businessHour.DayId} does not exist.");
-                }
-                businessHour.Day = day;
-            }
+            //// Ensure Days are properly handled for BusinessHours
+            //foreach (var businessHour in foodResource.BusinessHours)
+            //{
+            //    var day = _context.Days.FindAsync(businessHour.DayId);
+            //    if (day == null)
+            //    {
+            //        throw new Exception($"Day with Id {businessHour.DayId} does not exist.");
+            //    }
+            //    businessHour.Day = day;
+            //}
 
-            return _context.FoodResources.Add(foodResource);
+            //return _context.FoodResources.Add(foodResource);
         }
 
         public FoodResource PutFoodResource(int id, FoodResource foodResource)
