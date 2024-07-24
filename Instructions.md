@@ -30,8 +30,8 @@ Make sure you have the latest installed:
 -	For ‘All Languages’ dropdown select C#
 -	For ‘Project Types’ dropdown select Web API
 -	Should be two options available. 
--	Select ‘ASP.NET Core API’
-![Create Project](![image](https://github.com/user-attachments/assets/427ebd7e-69ac-49a3-aca3-5a488ab59e99)
+-	Select ‘ASP.NET Core Web API’
+![Create Project](https://github.com/user-attachments/assets/427ebd7e-69ac-49a3-aca3-5a488ab59e99)
 - For solution name I will be using
 ```
 LADP__EFC
@@ -164,8 +164,8 @@ public class ResourceTags
      public List<FoodResource> FoodResource { get; } = [];  // Many-to-One relationship with ResourceTags
  }
 ```
-[One-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) relationships are used when a single entity is associated with any number of other entities. For example, a FoodResource can have many associated BusinessHours, but each BusinessHours is associated with only one FoodResource.
 
+[One-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) relationships are used when a single entity is associated with any number of other entities. For example, a FoodResource can have many associated BusinessHours, but each BusinessHours is associated with only one FoodResource.
 - Should look something like:
 ```
 public class BusinessHours
@@ -179,8 +179,8 @@ public class BusinessHours
     public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
 }
 ```
-[One-to-One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) relationships are used when one entity is associated with at most one other entity. For example, a BusinessHours has one Day, and that Day belongs to a single BusinessHours. The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table.
 
+The same can be said when it comes to the relationship between Day and BusinessHours. This is because a Day can have many associated BusinessHours, but each BusinessHours is associated with only one Day.The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table.
 - Should look something like:
 ```
 public class Day
@@ -188,7 +188,7 @@ public class Day
     public int Id { get; set; }
     public string Name { get; set; } = null!;
 
-    public BusinessHours BusinessHours { get; set; } = []; // Required reference navigation to principal
+    public List<BusinessHours> BusinessHours { get; set; } = []; // Many-to-One relationship with BusinessHours
 }
 ```
  Now Depending on how we intend to configure these models we will be returning to the classes in step 4. 
@@ -499,34 +499,34 @@ modelBuilder.Entity<FoodResource>(entity =>
 ```
 
 The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship. It is never necessary to configure a relationship twice, once starting from the principal, and then again starting from the dependent. Also, attempting to configure the principal and dependent halves of a relationship separately generally does not work. Choose to configure each relationship from either one end or the other and then write the configuration code only once.
+- One-to-one relationships are used when one entity is associated with at most one other entity. For example, a Blog has one BlogHeader, and that BlogHeader belongs to a single Blog.
 - [One to One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) example would look something like this:
 ```
   public class SampleContext : DbContext
 {
-    public DbSet<Author> Authors { get; set; }
-    
+    public DbSet<Blog> Blog { get; set; }
+    public DbSet<BlogHeader> BlogHeader { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Author>().HasOne(e => e.Day)
-                                      .WithOne(e => e.BusinessHours)
-                                      .HasForeignKey<Day>(e => e.Id)
-                                      .IsRequired();
+        modelBuilder.Entity<Blog>()
+          .HasOne(e => e.Header)
+          .WithOne(e => e.Blog)
+          .HasForeignKey<BlogHeader>(e => e.BlogId)
+          .IsRequired(false);
     }
 }
 // Principal (parent)
-public class BusinessHours
-{
-    public int BusinessHourId { get; set; }
-    // etc....
-    public Day Day { get; set; } = null!; // Reference navigation to dependent
-}
-// Dependent (child)
-public class Day
+public class Blog
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
-
-    public BusinessHours BusinessHours { get; set; } = []; // Required reference navigation to principal
+    public BlogHeader? Header { get; set; } // Reference navigation to dependent
+}
+}
+// Dependent (child)
+public class BlogHeader
+{
+    public int Id { get; set; }
+    public Blog Blog { get; set; } = null!; // Required reference navigation to principal
 }
 ```
 
@@ -587,7 +587,7 @@ Now with the example given above with FoodResource, ResourceTags, and Tags have 
                   .WithMany(e => e.FoodResource)
                   .UsingEntity<ResourceTags>(
                       l => l.HasOne<Tag>().WithMany().HasForeignKey(e => e.TagId),
-                      r => r.HasOne<FoodResource>().WithMany().HasForeignKey(e => e.FoodResourceId)););
+                      r => r.HasOne<FoodResource>().WithMany().HasForeignKey(e => e.FoodResourceId));
         });
     }
 public class FoodResource
@@ -633,36 +633,46 @@ When working with relationships there may also come a time when you want preserv
                   .OnDelete(DeleteBehavior.Cascade) // Cascade delete for FoodResource
                   .HasConstraintName("FK_BusinessHours_FoodResource");
             entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours)
-                  .HasForeignKey(d => d.DayId)
+                  .HasForeignKey("DayId")
                   .OnDelete(DeleteBehavior.Restrict) // No action on delete for Day
                   .HasConstraintName("FK_BusinessHours_Days");
         });
+        modelBuilder.Entity<FoodResource>(entity =>
+        {
+          entity.HasMany(e => e.Tags)
+                .WithMany(e => e.FoodResource)
+                .UsingEntity<ResourceTags>(
+                    l => l.HasOne<Tag>().WithMany().HasForeignKey(e => e.TagId).HasConstraintName("FK_ResourceTags_Tags"),
+                    r => r.HasOne<FoodResource>().WithMany().HasForeignKey(e => e.FoodResourceId).HasConstraintName("FK_ResourceTags_FoodResource")
+                );
+        });
     }
-public class FoodResource
-{
-    public int Id { get; set; }
-    // etc....
+    public class FoodResource
+    {
+      public int Id { get; set; }
+      // etc....
 
-    public List<BusinessHours> BusinessHours { get; } = []; // Collection navigation containing dependents
+      public List<BusinessHours> BusinessHours { get; } = []; // Collection navigation containing dependents
+    }
+    public class BusinessHours
+    {
+      public int BusinessHourId { get; set; }
+      public int FoodResourceId { get; set; } // Required foreign key property
+      public int DayId { get; set; } // Required foreign key property
+      public string? OpenTime { get; set; }
+      public string? CloseTime { get; set; }
+  
+      public Day Day { get; set; } = null!; // Required reference navigation to principal
+      public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
+    }
+    public class Day
+     {
+         public int Id { get; set; }
+         public string Name { get; set; } = null!;
+    
+         public List<BusinessHours> BusinessHours { get; } = [];  // Collection navigation containing dependents
+     }
 }
-public class BusinessHours
-{
-    public int BusinessHourId { get; set; }
-    public int FoodResourceId { get; set; } // Required foreign key property
-    public int DayId { get; set; } // Required foreign key property
-    public string? OpenTime { get; set; }
-    public string? CloseTime { get; set; }
-
-    public Day Day { get; set; } = null!; // Required reference navigation to principal
-    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
-}
- public class Day
- {
-     public int Id { get; set; }
-     public string Name { get; set; } = null!;
-
-     public List<BusinessHours> BusinessHours { get; } = [];  // Collection navigation containing dependents
- }
 ```
 
 <!--
