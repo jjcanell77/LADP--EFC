@@ -7,7 +7,6 @@ Most non-trivial web applications will need to reliably run operations on data, 
 -	EF Core is a lightweight, extensible, open source, and cross-platform data access technology for .NET applications.
 -	EF Core can serve as an ORM (object-relational mapper), which:
 allow you to interact with the relational databases using .NET plain old Common Runtime Language (CLR) objects (POCOs) and Language Integrated Query (LINQ) syntax for objects.
-eliminates the need for most of the data-access code that typically needs to be written.
 -	EF Core supports a large number of popular databases, including SQLite, MySQL, PostgreSQL, Oracle, and Microsoft SQL Server.
 -	Eliminates the need for most data-access code that is typically written in our web API systems
 -	EFC uses LINQ methods to query data from the database using strongly types expressions
@@ -18,7 +17,7 @@ eliminates the need for most of the data-access code that typically needs to be 
 After EF Core is configured, you can use it to perform CRUD operations on your entity classes. Then, you can develop against C# classes, delegating the database operations to the context class. Database providers in turn translate it to database-specific query language. An example is SQL for a relational database. Queries are always executed against the database, even if the entities returned in the result already exist in the context.
 
 ## Step 1: Starting From Scratch
-For this tutorial we will be using a controller-based Fluent API. Here i plan to show you the steps I took to add the Food Resources to better explain the steps.
+For this tutorial we will be using a controller-based Fluent API. Here I plan to show you the steps I took to add the Food Resources to better explain the steps.
 ### Inital Set-up
 Make sure you have the latest installed:
 -	[.NET SDK](https://dotnet.microsoft.com/en-us/download)
@@ -32,7 +31,11 @@ Make sure you have the latest installed:
 -	For ‘Project Types’ dropdown select Web API
 -	Should be two options available. 
 -	Select ‘ASP.NET Core API’
-
+![Create Project](![image](https://github.com/user-attachments/assets/427ebd7e-69ac-49a3-aca3-5a488ab59e99)
+- For solution name I will be using
+```
+LADP__EFC
+```
 ### Installing NuGet Packages
 -	Right click the Solution you just created in the Solution Exlplorer
 -	Then, select ‘Manage NuGet Packages for Solution…’
@@ -49,8 +52,16 @@ Microsoft.EntityFrameworkCore.SqlServer
 Microsoft.EntityFrameworkCore.Tools
 ```
 
+### Remove Unnecessary built-in Classes
+-	In your Solution explorer you should see your project along with some folders/classes
+-	Inside the folder called Controllers folder you will see WeatherForcastController.cs.
+-	You may delete this as you won’t be needing it. 
+-	 Underneath the Program.cs you should see WeatherForcast.cs. 
+-	You may delete this also.
+-	 Do NOT delete the folder controller, as we are designing a [Controller-Based](https://www.c-sharpcorner.com/article/choosing-between-controllers-and-minimal-api-for-net-apis/) API.   
+
 ##  Step 2 : Setting up entities/models 
-The entity class will consist of the object that your storing. This model is built using a set of [conventions](https://www.entityframeworktutorial.net/efcore/conventions-in-ef-core.aspx) that look for common patterns. And when making your model you will see that some that show a One-to-Many, Many-to-Many, or even One-to-One realtionship.
+The entity class will consist of the object that your storing. This model is built using a set of [conventions](https://www.entityframeworktutorial.net/efcore/conventions-in-ef-core.aspx) that look for common patterns. When making your model you will see that some that show a One-to-Many, Many-to-Many, or even One-to-One relationship.
 
 - Here is an example of the object we are creating in JS:
 ```
@@ -110,7 +121,7 @@ The entity class will consist of the object that your storing. This model is bui
      },
 ```
 
-### Add a entity/model class
+### Add entity/model class
 -	In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Models.
 -	Right-click the Models folder and select Add > Class. Name the class FoodResource and select Add.
 -	Should look something like:
@@ -130,20 +141,17 @@ public class FoodResource
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? Description { get; set; }
-    public List<ResourceTags> ResourceTags { get; } = []; // One-to-Many relationship with Tag
+    public List<Tag> Tag { get; } = []; // Many-to-Many relationship with Tag through the join table ResourceTags
     public List<BusinessHours> BusinessHours { get; set; } = [];// One-to-Many relationship with BusinessHours
 }
 ```
-The table for ResourceTags creates a [Many-to-One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship between FoodResource and Tag by linking TagId and FoodResourceId. This is because FoodResource can have have many associated tags, and each Tag can in turn be associated with any number of FoodResource giving us the [one-to-many relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many).
+[Many-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, a FoodResource can have many associated Tags, and each Tag can in turn be associated with any number of FoodResource. In our particular situation this [relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-class-for-join-entity) is made between FoodResource and Tag by joining TagId and FoodResourceId using ResourceTags.
 - Should look something like:
 ```
 public class ResourceTags
 {
     public int TagId { get; set; }
     public int FoodResourceId { get; set; }
-    public Tag Tag { get; set; } = null!; // Many-to-One relationship with Tag
-
-    public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
 }
 ```
 
@@ -153,26 +161,25 @@ public class ResourceTags
      public int Id { get; set; }
      public string Name { get; set; } = null!;
 
-     public List<ResourceTags> ResourceTags { get; } = [];  // One-to-Many relationship with ResourceTags
+     public List<FoodResource> FoodResource { get; } = [];  // Many-to-One relationship with ResourceTags
  }
 ```
-Now the table for BusinessHours table gives us a one-to-many relationship, because Each entry in the businessHours array would be a record in this table.
+[One-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) relationships are used when a single entity is associated with any number of other entities. For example, a FoodResource can have many associated BusinessHours, but each BusinessHours is associated with only one FoodResource.
 
 - Should look something like:
 ```
 public class BusinessHours
 {
     public int BusinessHourId { get; set; }
-    public int FoodResourceId { get; set; }
-    public int DayId { get; set; }
+    public int FoodResourceId { get; set; }  // Required foreign key property
+    public Day Day { get; set; } = null!; // One-to-One relationship with Day
     public string? OpenTime { get; set; }
     public string? CloseTime { get; set; }
 
-    public Day Day { get; set; } = null!; // Many-to-One relationship with Days
-    public FoodResource FoodResource { get; set; } = null!; // Many-to-One relationship with FoodResource
+    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
 }
 ```
-The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table using DayId.
+[One-to-One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) relationships are used when one entity is associated with at most one other entity. For example, a BusinessHours has one Day, and that Day belongs to a single BusinessHours. The Days table holds the day names ("Monday", "Tuesday", etc.), which can be used by many BusinessHours. It holds only one version of those days, and the BusinessHours table references the Days table.
 
 - Should look something like:
 ```
@@ -181,7 +188,7 @@ public class Day
     public int Id { get; set; }
     public string Name { get; set; } = null!;
 
-    public List<BusinessHours> BusinessHours { get; set; } = []; // One-to-Many relationship with BusinessHours
+    public BusinessHours BusinessHours { get; set; } = []; // Required reference navigation to principal
 }
 ```
  Now Depending on how we intend to configure these models we will be returning to the classes in step 4. 
@@ -215,6 +222,7 @@ namespace LADP__EFC.Data
         }
   }
 ```
+
 ### Register the database context
 In ASP.NET Core, services such as the DB context must be registered with the dependency injection (DI) container. The container provides the service to controllers.
 - Update Program.cs with something like:
@@ -260,6 +268,7 @@ namespace LADP__EFC
     }
 }
 ```
+
 ### Add Connection String
 -	In Solution Explorer, open appsettings.json. 
 -	Go ahead an add the connection string. 
@@ -267,7 +276,7 @@ namespace LADP__EFC
 ```
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Enter Connection Strring Here"
+    "DefaultConnection": "Enter Connection String Here"
   },
   "Logging": {
     "LogLevel": {
@@ -278,8 +287,12 @@ namespace LADP__EFC
   "AllowedHosts": "*"
 }
 ```
+
 ## Step 4: Configuring a Model 
 The model can then be customized using mapping attributes (also known as data annotations) and/or calls to the ModelBuilder methods (also known as fluent API) in OnModelCreating, both of which will override the configuration performed by conventions.
+
+### Remember to Choose Either to Use Data Annotations or Fluent API
+- Fluent API will overwrite Use Data Annotations
 
 ### [Data Annotations/Mapping Atrributes](https://www.learnentityframeworkcore.com/configuration/data-annotation-attributes) (Optional if not using prefered Fluent API)
 Using atrributes are nice because they are applied directly to the domain model, so it is easy to see how the model is configured just by examining the class files. You may have remember using Some attributes, such as Required and StringLength are leveraged by client frameworks such as ASP.NET MVC to provide UI-based validation based on the specified configuration.
@@ -486,7 +499,7 @@ modelBuilder.Entity<FoodResource>(entity =>
 ```
 
 The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship. It is never necessary to configure a relationship twice, once starting from the principal, and then again starting from the dependent. Also, attempting to configure the principal and dependent halves of a relationship separately generally does not work. Choose to configure each relationship from either one end or the other and then write the configuration code only once.
-- [One to One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) example would look soemthing like this:
+- [One to One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) example would look something like this:
 ```
   public class SampleContext : DbContext
 {
@@ -494,33 +507,70 @@ The only exceptions would be when dealing with different types of relationships 
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Author>()
-            .HasOne(a => a.Biography)
-            .WithOne(b => b.Author);
+        modelBuilder.Entity<Author>().HasOne(e => e.Day)
+                                      .WithOne(e => e.BusinessHours)
+                                      .HasForeignKey<Day>(e => e.Id)
+                                      .IsRequired();
     }
 }
-public class Author
+// Principal (parent)
+public class BusinessHours
 {
-    public int AuthorId { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public AuthorBiography Biography { get; set; }
+    public int BusinessHourId { get; set; }
+    // etc....
+    public Day Day { get; set; } = null!; // Reference navigation to dependent
 }
-public class AuthorBiography
+// Dependent (child)
+public class Day
 {
-    public int AuthorBiographyId { get; set; }
-    public string Biography { get; set; }
-    public int AuthorId { get; set; }
-    public Author Author { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = null!;
+
+    public BusinessHours BusinessHours { get; set; } = []; // Required reference navigation to principal
 }
 ```
 
-With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship. The example below has two one-to-many relationships, one for each of the foreign keys defined in the join table. This realtionship is made up of:
+With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship. The example below has two one-to-many relationships, one for each of the ForeignKeys defined in the join table. This realtionship is made up of:
 - One or more primary or alternate key properties on the principal entity; that is the "one" end of the relationship.
-- One or more foreign key properties on the dependent entity; that is the "many" end of the relationship.
+- One or more ForeignKeys properties on the dependent entity; that is the "many" end of the relationship.
 - Optionally, a collection navigation on the principal entity referencing the dependent entities.
 - Optionally, a reference navigation on the dependent entity referencing the principal entity.
-- [One to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) example would look soemthing like this:
+- [One to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) example would look something like this:
+```
+  public class SampleContext : DbContext
+{
+    public DbSet<FoodResource> FoodResource { get; set; }
+    public DbSet<BusinessHours> BusinessHours { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FoodResource>(entity =>
+        {
+            entity.ToTable("FoodResource");
+            etc...
+            entity.HasMany(e => e.BusinessHours)
+                  .WithOne(e => e.FoodResource)
+                  .HasForeignKey(e => e.FoodResourceId)
+                  .IsRequired();
+        });
+    }
+public class FoodResource
+{
+    public int Id { get; set; }
+    // etc....
+    public List<BusinessHours> BusinessHours { get; } = []; // Collection navigation containing dependents
+}
+public class BusinessHours
+{
+    public int BusinessHourId { get; set; }
+    public int FoodResourceId { get; set; }  // Required foreign key property
+    // etc....
+    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
+}
+```
+
+Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentation there a alot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
+
+- Here is an optional way to acheive a Many-to-Many relationship example:
 ```
   public class SampleContext : DbContext
 {
@@ -529,72 +579,41 @@ With that being said when used in conjunction with HasOne method the WithMany ca
     public DbSet<Tag> Tag { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ResourceTags>(entity =>
-        {
-            entity.ToTable("ResourceTags");
-            entity.HasKey(e => new { e.TagId, e.FoodResourceId });
-            entity.HasOne(e => e.FoodResource).WithMany(fr => fr.ResourceTags).HasForeignKey(e => e.FoodResourceId).IsRequired();
-            entity.HasOne(e => e.Tag).WithMany(t => t.ResourceTags).HasForeignKey(e => e.TagId).IsRequired();
-        });
-    }
-public class FoodResource
-{
-    public int Id { get; set; }
-    // etc....
-    public List<ResourceTags> ResourceTags { get; } = []; // Collection navigation containing dependents
-}
-public class ResourceTags
-{
-    public int TagId { get; set; } // Required foreign key property
-    public int FoodResourceId { get; set; } // Required foreign key property
-    public Tag Tag { get; set; } = null!; // Required reference navigation to principal
-    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
-}
- public class Tag
- {
-     public int Id { get; set; }
-     public string Name { get; set; } = null!;
-
-     public List<ResourceTags> ResourceTags { get; } = [];  // Collection navigation containing dependents
- }
-```
-
-Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentationt there a alot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
-
-- Here is an optional way to acheive a Many-to-Many relationship example:
-```
-  public class SampleContext : DbContext
-{
-    public DbSet<FoodResource> FoodResource { get; set; }
-    public DbSet<Tag> Tag { get; set; }
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
         modelBuilder.Entity<FoodResource>(entity =>
         {
             entity.ToTable("FoodResource");
             // etc....
-            entity.HasMany(e => e.Tags).WithMany(e => e.FoodResources);
+           entity.HasMany(e => e.Tag)
+                  .WithMany(e => e.FoodResource)
+                  .UsingEntity<ResourceTags>(
+                      l => l.HasOne<Tag>().WithMany().HasForeignKey(e => e.TagId),
+                      r => r.HasOne<FoodResource>().WithMany().HasForeignKey(e => e.FoodResourceId)););
         });
     }
 public class FoodResource
 {
     public int Id { get; set; }
     // etc....
-    public List<Tag> Tags { get; } = []; // Collection navigation containing dependents
+    public List<Tag> Tag { get; } = []; // Collection navigation containing dependents
 }
- public class Tag
- {
+public class ResourceTags
+{
+    public int TagId { get; set; } // Required ForeignKey property
+    public int FoodResourceId { get; set; } // Required ForeignKey property
+}
+public class Tag
+{
      public int Id { get; set; }
      public string Name { get; set; } = null!;
 
-     public List<FoodResource> FoodResources { get; } = [];  // Collection navigation containing dependents
- }
+     public List<FoodResource> FoodResource { get; } = [];  // Required reference navigation to principal
+}
 ```
 
-When working with relationships there may also come a time when you want preserve dependent data or sepcidfy that they should be deleted as well. This is where the [onDelete](https://www.learnentityframeworkcore.com/configuration/fluent-api/ondelete-method) method comes in to play. 
+When working with relationships there may also come a time when you want preserve dependent data or specify that they should be deleted as well. This is where the [onDelete](https://www.learnentityframeworkcore.com/configuration/fluent-api/ondelete-method) method comes in to play. 
 - Cascade means that dependents should be deleted
 - Restrict means that  dependents are unaffected
-- SetNull means that the foreign key values in dependent rows should update to NULL
+- SetNull means that the ForeignKey values in dependent rows should update to NULL
 - Here is an example Referening BusinessHours and Day:
 ```
  public class SampleContext : DbContext
@@ -607,19 +626,16 @@ When working with relationships there may also come a time when you want preserv
         modelBuilder.Entity<BusinessHours>(entity =>
         {
             entity.ToTable("BusinessHours");
-            entity.HasKey(e => e.BusinessHourId).HasName("PK_BusinessHours");
-            entity.Property(e => e.BusinessHourId).HasColumnName("BusinessHourID").HasColumnType("int");
+            // etc....
+
             entity.HasOne(d => d.FoodResource).WithMany(p => p.BusinessHours)
-              .HasForeignKey(d => d.FoodResourceId)
-              .OnDelete(DeleteBehavior.Cascade) // Cascade delete for FoodResource
-              .HasConstraintName("FK_BusinessHours_FoodResource");
-            entity.Property(e => e.FoodResourceId).HasColumnName("FoodResourceID").HasColumnType("int");
+                  .HasForeignKey(d => d.FoodResourceId)
+                  .OnDelete(DeleteBehavior.Cascade) // Cascade delete for FoodResource
+                  .HasConstraintName("FK_BusinessHours_FoodResource");
             entity.HasOne(d => d.Day).WithMany(p => p.BusinessHours)
-              .HasForeignKey(d => d.DayId)
-              .OnDelete(DeleteBehavior.Restrict) // No action on delete for Day
-              .HasConstraintName("FK_BusinessHours_Days");
-            entity.Property(e => e.OpenTime).HasMaxLength(10).HasColumnName("OpenTime").HasColumnType("nvarchar(10)");
-            entity.Property(e => e.CloseTime).HasMaxLength(10).HasColumnName("CloseTime").HasColumnType("nvarchar(10)");
+                  .HasForeignKey(d => d.DayId)
+                  .OnDelete(DeleteBehavior.Restrict) // No action on delete for Day
+                  .HasConstraintName("FK_BusinessHours_Days");
         });
     }
 public class FoodResource
@@ -650,7 +666,7 @@ public class BusinessHours
 ```
 
 <!--
-In the examples so far, the join table has been used only to store the foreign key pairs representing each association. However, it can also be used to store information about the association--for example, the time it was created.This is the case when we get to the BusinessHours table as it is [Many-to-many and join table with payload](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many).
+In the examples so far, the join table has been used only to store the ForeignKey pairs representing each association. However, it can also be used to store information about the association--for example, the time it was created.This is the case when we get to the BusinessHours table as it is [Many-to-many and join table with payload](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many).
 - Here is how you would handle this situation:
 ```
   public class SampleContext : DbContext
@@ -695,8 +711,8 @@ public class BusinessHours
 ##  Step 5 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
-One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just o get you started as you will need to make updates which is why it is optional. 
-This template will Mark the class with the [ApiController] attribute, that indicates that the controller responds to web API requests. It also uses DI to inject the database context (DataContext) into the controller. The database context is used in each of the CRUD methods in the controller.
+One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just to get you started as you will need to make updates which is why it is optional. 
+This template will mark the class with the [ApiController] attribute, that indicates that the controller responds to web API requests. It also uses DI to inject the database context (DataContext) into the controller. The database context is used in each of the CRUD methods in the controller.
 -	Right-click the Controllers folder.
 -	Select Add > New Scaffolded Item.
 -	Select API Controller with actions, using Entity Framework, and then select Add.
@@ -756,11 +772,11 @@ Using the repository pattern in Entity Framework Core helps create a clean separ
 -	Should look something like:
 ![Interface Folder](https://github.com/user-attachments/assets/19d18104-d078-4840-8fb4-6d970fd4c7fa)
 ### The Interface
-The best way to think of an interface is a contract. By having this contract we can have bette control on change management and other breaking changes. 
+The best way to think of an interface is a contract. By having this contract we can have better control on change management and other breaking changes. 
 -	Right-click the Interfaces folder, then  Select Add > New Item...
 -	Select Add > Interface. Name the Interface IRepositoryFoodResource and click Add.
 -	Next your going to add you basic CRUD methods for now.
--	Should look something like almost mimicing the methods in your base controller:
+-	Should look something like almost mimicking the methods in your base controller:
 ```
 public interface IRepositoryFoodResource
 {
@@ -782,7 +798,7 @@ public class RepositoryFoodResource : IRepositoryFoodResource
 }
 ```
 -	You should see an error appear on IRepositoryFoodResource.
--	Right-click IRepositoryFoodResource, then  Select Lightbulb for Quick Refactotrings...
+-	Right-click IRepositoryFoodResource, then  Select Lightbulb for Quick Refactorings...
 -	 Select Implement the interface.
 -	 Should look like this:
 ```
@@ -916,9 +932,9 @@ public class FoodResourcesController : ControllerBase
 
 ### Adding Repository to Dependency injection container
 In ASP.NET Core, the DI container provides several lifetimes for services: Singleton, Scoped, and Transient. Each has specific use cases, and choosing the correct lifetime is crucial for the application's performance and correctness.
-- A singletion is a single instance of the service is created and shared across the entire application lifecycle.
+- A singleton is a single instance of the service is created and shared across the entire application lifecycle.
 - Scoped is a new instance of the service is created once per request and shared within that request.
-- Transientis a new instance of the service is created each time it is requested.
+- Transient is a new instance of the service is created each time it is requested.
 
 For our project we will be implementing AddScoped into our Program.cs similar to how we add singletons in Sabio to add IRepositoryFoodResource.
 -	Should look something like:
