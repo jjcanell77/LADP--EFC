@@ -445,9 +445,9 @@ public class Days
 ```
 ### [Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api) (Optional if not using Data Annotations/Mapping Atrributes)
 This approach is an alternative to using data annotations and provides more control over the configuration with the plus of being able to be located in one place, away from the model classes. This is applied inside of the database context class to entities/models properties via chained methods. 
-- These methods can be in conjuntion with Data annotations to cover areas that are missed. such as default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
+- These methods can be in conjuntion with Data annotations to cover areas that are missed. Such as default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
 - Also can handle entity to table and relationships mapping e.g. PrimaryKey, AlternateKey, Index, table name, one-to-one, one-to-many, many-to-many relationships etc.
-- And lastly, provide property onfiguration meaning column name, default value, nullability, Foreignkey, data type, concurrency column etc.
+- And lastly, provide property onfiguration meaning column name, default value, nullability, ForeignKey, data type, concurrency column etc.
 
 #### The steps:
 Adding an entity to OnModelCreating method inside the DataContext Class we made ealier. Starting with FoodResource using the ToTable method to specify the name of the database table that the entity should map to.
@@ -568,7 +568,7 @@ public class BusinessHours
 }
 ```
 
-Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentation there a alot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
+Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentation there are a lot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
 
 - Here is an optional way to acheive a Many-to-Many relationship example:
 ```
