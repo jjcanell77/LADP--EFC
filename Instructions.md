@@ -718,7 +718,14 @@ public class BusinessHours
 -->
 
 #### Go ahead and finish up the rest of the configurations and if you get stuck please refer to the [code](https://github.com/jjcanell77/LADP--EFC/tree/master/LADP-%20EFC) for help.
-##  Step 5 : Set Up Controllers
+
+##  Step 5 : Migrations
+EF Core provides us with two primary ways of keeping the EF Core model and database schema in sync. It does this by letting us choose between whether the EF Core model or the database schema is the source of truth and go from there.
+- [Model](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli): if the model is the source truth then as we make changes to the model we will incrementally applies the corresponding schema changes to your database so that it remains compatible with your EF Core model.
+- [Database](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli): vise versa if you want your database schema to be the source of truth we can use Reverse Engineering to scaffold a DbContext and the entity type classes by reverse engineering your database schema into an EF Core model.
+#### My intentions are to proceed with the Model First Aprroach
+
+##  Step 6 : Set Up Controllers
 As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
 One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just to get you started as you will need to make updates which is why it is optional. 
@@ -774,7 +781,7 @@ namespace LADP__EFC.Controllers
 }
 ```
 
-## Step 6: Setting up the Repository
+## Step 7: Setting up the Repository
 Using the repository pattern in Entity Framework Core helps create a clean separation between the data access and business logic layers. This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 
 - In Solution Explorer, right-click the project.
 - Select Add > New Folder. Name the folder Repository.
