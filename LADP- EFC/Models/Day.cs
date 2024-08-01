@@ -7,5 +7,5 @@ public class Day
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-    public List<BusinessHours> BusinessHours { get; set; } = []; // Many-to-One relationship with BusinessHours
+    public List<BusinessHours> BusinessHours { get; set; } = []; // One-to-Many relationship with BusinessHours
 }

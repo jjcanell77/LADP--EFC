@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LADP__EFC.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using LADP__EFC.Models;
 using LADP__EFC.Repository.Interfaces;
-using Azure;
+using LADP__EFC.DTO;
+using NuGet.Protocol.Core.Types;
 
 namespace LADP__EFC.Controllers
 {
@@ -16,19 +10,19 @@ namespace LADP__EFC.Controllers
     [ApiController]
     public class FoodResourcesController : ControllerBase
     {
-        private readonly IRepositoryFoodResource _repositroy;
+        private readonly IRepositoryFoodResource _repository;
         public FoodResourcesController(IRepositoryFoodResource repository)
         {
-            _repositroy = repository;
+            _repository = repository;
         }
 
         // GET: api/FoodResources
         [HttpGet]
-        public ActionResult<IEnumerable<FoodResource>> GetFoodResources()
+        public ActionResult<IEnumerable<FoodResourceDTO>> GetFoodResources()
         {
             try
             { 
-                var list = _repositroy.GetFoodResources();
+                var list = _repository.GetFoodResources();
                 if (list == null)
                 {
                     return NotFound();
@@ -49,7 +43,7 @@ namespace LADP__EFC.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<FoodResource>> GetFoodResource(int id)
         {
-            var foodResource =  _repositroy.GetFoodResource(id);
+            var foodResource = _repository.GetFoodResource(id);
 
             if (foodResource == null)
             {
@@ -62,14 +56,14 @@ namespace LADP__EFC.Controllers
         // PUT: api/FoodResources/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutFoodResource(int id, FoodResource foodResource)
+        public ActionResult<FoodResource> PutFoodResource(int id, FoodResource foodResource)
         {
             if (id != foodResource.Id)
             {
                 return BadRequest();
             }
 
-            var item = _repositroy.PutFoodResource(id, foodResource);
+            var item = _repository.PutFoodResource( foodResource);
             if (item != null)
             {
                 return NoContent();
@@ -79,14 +73,22 @@ namespace LADP__EFC.Controllers
 
         // POST: api/FoodResources
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // verify the benefits of using Async
+        /* public async Task<IActionResult> InsertFoodResource(FoodResourceAddDTO insertItem)*
+           {
+                var id = await _repository.InsertFoodResource(insertItem);
+                return Created(string.Empty, new { id });
+        }
+         */
         [HttpPost]
-        public ActionResult<FoodResource> PostFoodResource(FoodResource foodResource)
+        //public ActionResult<FoodResourceAddDTO> PostFoodResource(FoodResourceAddDTO foodResource)
+        public ActionResult<FoodResourceDTO> PostFoodResource(AddFoodResourceDTO foodResource)
         {
-            ObjectResult result = null;
-            try 
+            ObjectResult result;
+            try
             {
-                var item = _repositroy.PostFoodResource(foodResource);
-                result = CreatedAtAction("GetFoodResource", new { id = foodResource.Id }, foodResource);
+                var item = _repository.InsertFoodResource(foodResource);
+                result = CreatedAtAction("GetFoodResource", new { id = item.Id }, item);
             }
             catch (Exception ex)
             {
@@ -100,7 +102,7 @@ namespace LADP__EFC.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFoodResource(int id)
         {
-            var item = _repositroy.DeleteFoodResource(id);
+            var item = _repository.DeleteFoodResource(id);
             if (item == null)
             {
                 return NotFound();

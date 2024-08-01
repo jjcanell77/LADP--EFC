@@ -1,13 +1,15 @@
-﻿using LADP__EFC.Models;
+﻿using LADP__EFC.DTO;
+using LADP__EFC.Models;
 
 namespace LADP__EFC.Repository.Interfaces
 {
     public interface IRepositoryFoodResource
     {
-        IEnumerable<FoodResource> GetFoodResources();
+        IEnumerable<FoodResourceDTO> GetFoodResources();
         FoodResource GetFoodResource(int id);
-        FoodResource PutFoodResource(int id, FoodResource foodResource);
-        FoodResource PostFoodResource(FoodResource foodResource);
+        FoodResource PutFoodResource(FoodResource foodResource);
+        FoodResourceDTO InsertFoodResource(AddFoodResourceDTO insertItem);
         FoodResource DeleteFoodResource(int id);
     }
 }
+
