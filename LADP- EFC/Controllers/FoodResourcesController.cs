@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LADP__EFC.Models;
 using LADP__EFC.Repository.Interfaces;
-using LADP__EFC.DTO;
 using NuGet.Protocol.Core.Types;
+using Azure;
+using LADP__EFC.DTO.FoodResource;
 
 namespace LADP__EFC.Controllers
 {
@@ -22,7 +23,7 @@ namespace LADP__EFC.Controllers
         {
             try
             { 
-                var list = _repository.GetFoodResources();
+                var list = _repository.GetAll();
                 if (list == null)
                 {
                     return NotFound();
@@ -41,34 +42,54 @@ namespace LADP__EFC.Controllers
 
         // GET: api/FoodResources/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<FoodResource>> GetFoodResource(int id)
+        public ActionResult<FoodResourceDTO> GetFoodResource(int id)
         {
-            var foodResource = _repository.GetFoodResource(id);
-
-            if (foodResource == null)
+            try
             {
-                return NotFound();
-            }
+                var foodResource = _repository.GetById(id);
 
-            return foodResource;
+                if (foodResource == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(foodResource);
+            }
+            catch (Exception ex) 
+            {
+                int iCode = 500;
+                return StatusCode(iCode, ex.ToString());
+            }
         }
 
         // PUT: api/FoodResources/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public ActionResult<FoodResource> PutFoodResource(int id, FoodResource foodResource)
+        public ActionResult<FoodResourceDTO> UpdateFoodResource(int id, FoodResourceDTO foodResource)
         {
+            ObjectResult result;
             if (id != foodResource.Id)
             {
                 return BadRequest();
             }
-
-            var item = _repository.PutFoodResource( foodResource);
-            if (item != null)
+            try
             {
-                return NoContent();
+                var item = _repository.Update(foodResource);
+                if (item == null)
+                {
+                    return NoContent();
+                }
+                else
+                {
+                    return Ok(item);
+                }
             }
-            return NotFound();
+            catch (Exception ex)
+            {
+                int iCode = 500;
+                result = StatusCode(iCode, ex.ToString());
+            }
+            return result;
         }
 
         // POST: api/FoodResources
@@ -82,12 +103,12 @@ namespace LADP__EFC.Controllers
          */
         [HttpPost]
         //public ActionResult<FoodResourceAddDTO> PostFoodResource(FoodResourceAddDTO foodResource)
-        public ActionResult<FoodResourceDTO> PostFoodResource(AddFoodResourceDTO foodResource)
+        public ActionResult<FoodResourceDTO> CreateFoodResource(AddFoodResourceDTO foodResource)
         {
             ObjectResult result;
             try
             {
-                var item = _repository.InsertFoodResource(foodResource);
+                var item = _repository.Create(foodResource);
                 result = CreatedAtAction("GetFoodResource", new { id = item.Id }, item);
             }
             catch (Exception ex)
@@ -100,14 +121,25 @@ namespace LADP__EFC.Controllers
 
         // DELETE: api/FoodResources/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFoodResource(int id)
+        public ActionResult<FoodResourceDTO> DeleteFoodResource(int id)
         {
-            var item = _repository.DeleteFoodResource(id);
-            if (item == null)
+            try
             {
-                return NotFound();
+                var item = _repository.Delete(id);
+                if (item == null)
+                {
+                    return NoContent();
+                }
+                else 
+                {
+                    return Ok();
+                }
             }
-            return NoContent();
+            catch (Exception ex) 
+            {
+                int iCode = 500;
+                return StatusCode(iCode, ex.ToString());
+            }
         }
     }
 }

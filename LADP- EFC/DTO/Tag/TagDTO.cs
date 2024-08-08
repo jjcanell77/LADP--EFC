@@ -1,6 +1,6 @@
-﻿namespace LADP__EFC.DTO
+﻿namespace LADP__EFC.DTO.Tag
 {
-    public class DayDTO
+    public class TagDTO
     {
         public string Name { get; set; } = null!;
     }

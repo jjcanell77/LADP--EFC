@@ -1,4 +1,6 @@
-﻿namespace LADP__EFC.DTO
+﻿using LADP__EFC.DTO.Day;
+
+namespace LADP__EFC.DTO.BusinessHours
 {
     public class BusinessHoursDTO
     {

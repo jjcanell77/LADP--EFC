@@ -1,6 +1,8 @@
-﻿using LADP__EFC.Models;
+﻿using LADP__EFC.DTO.BusinessHours;
+using LADP__EFC.DTO.Tag;
+using LADP__EFC.Models;
 
-namespace LADP__EFC.DTO
+namespace LADP__EFC.DTO.FoodResource
 {
     public class AddFoodResourceDTO
     {
@@ -11,8 +13,8 @@ namespace LADP__EFC.DTO
         public string State { get; set; } = null!;
         public string Zipcode { get; set; } = null!;
         public string? Country { get; set; }
-        public decimal? Latitude { get; set; }
-        public decimal? Longitude { get; set; }
+        public decimal Latitude { get; set; }
+        public decimal Longitude { get; set; }
         public string? Phone { get; set; }
         public string? Website { get; set; }
         public string? Description { get; set; }

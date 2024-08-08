@@ -13,8 +13,8 @@ public class FoodResource
     public string State { get; set; } = null!;
     public string Zipcode { get; set; } = null!;
     public string? Country { get; set; }
-    public decimal? Latitude { get; set; }
-    public decimal? Longitude { get; set; }
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? Description { get; set; }
