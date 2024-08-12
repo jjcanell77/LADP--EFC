@@ -26,24 +26,27 @@ Make sure you have the latest installed:
   
 ### Create Project
 -	Open Visual Studio (This will give you a base template for an API system)
--	Select Create new project on bottom right side
--	For ‘All Languages’ dropdown select C#
--	For ‘Project Types’ dropdown select Web API
+-	Select `Create new project` on bottom right side
+-	For `All Languages` dropdown select `C#`
+-	For `Project Types` dropdown select `Web API`
 -	Should be two options available. 
--	Select ‘ASP.NET Core Web API’
+-	Select `ASP.NET Core Web API`
 ![Create Project](https://github.com/user-attachments/assets/427ebd7e-69ac-49a3-aca3-5a488ab59e99)
-- For solution name I will be using
+- For solution name I will be using but you can name this whatever you like
 ```
 LADP__EFC
 ```
 ### Installing NuGet Packages
 -	Right click the Solution you just created in the Solution Exlplorer
--	Then, select ‘Manage NuGet Packages for Solution…’
--	Should see ‘Browse’, ‘Installed’, ‘Updates’, and ‘Consolidate’
--	Make sure ‘Browse’ in this window is selected
+-	Then, select `Manage NuGet Packages for Solution…`
+-	Should see `Browse`, `Installed`, `Updates`, and `Consolidate`
+-	Make sure `Browse` in this window is selected
 -	In the search bar search and install the following:
  ``` { attributes go here }
 Microsoft.EntityFrameworkCore
+```
+```
+Microsoft.EntityFrameworkCore.Design
 ```
 ```
 Microsoft.EntityFrameworkCore.SqlServer
@@ -51,19 +54,23 @@ Microsoft.EntityFrameworkCore.SqlServer
 ```
 Microsoft.EntityFrameworkCore.Tools
 ```
+```
+Microsoft.VisualStudio.Web.CodeGeneration.Design
+```
 
 ### Remove Unnecessary built-in Classes
 -	In your Solution explorer you should see your project along with some folders/classes
--	Inside the folder called Controllers folder you will see WeatherForcastController.cs.
+-	Inside the folder called `Controllers` folder you will see `WeatherForcastController.cs`.
 -	You may delete this as you won’t be needing it. 
--	 Underneath the Program.cs you should see WeatherForcast.cs. 
+-	 Underneath the Program.cs you should see `WeatherForcast.cs`. 
 -	You may delete this also.
 -	 Do NOT delete the folder controller, as we are designing a [Controller-Based](https://www.c-sharpcorner.com/article/choosing-between-controllers-and-minimal-api-for-net-apis/) API.   
 
 ##  Step 2 : Setting up entities/models 
 The entity class will consist of the object that your storing. This model is built using a set of [conventions](https://www.entityframeworktutorial.net/efcore/conventions-in-ef-core.aspx) that look for common patterns. When making your model you will see that some that show a One-to-Many, Many-to-Many, or even One-to-One relationship.
 
-- Here is an example of the object we are creating in JS:
+- Here is an example of the object we are looking to create in JS:
+- There may of course be some changes but this gives us a general idea of what we are trying to achieve.
 ```
  {
          "name": "Agnes Memorial Church Of God In Christ",
@@ -122,8 +129,9 @@ The entity class will consist of the object that your storing. This model is bui
 ```
 
 ### Add entity/model class
--	In Solution Explorer, right-click the project. Select Add > New Folder. Name the folder Models.
--	Right-click the Models folder and select Add > Class. Name the class FoodResource and select Add.
+First thing is first we need to create our model/entity that will create that object we saw above.
+-	In Solution Explorer, right-click the `project`. Select `Add` > `New Folder`. Name the folder Models.
+-	Right-click the `Models` folder and select `Add` > `Class`. Name the class `FoodResource` and select `Add`.
 -	Should look something like:
 ```
 public class FoodResource
@@ -145,7 +153,9 @@ public class FoodResource
     public List<BusinessHours> BusinessHours { get; set; } = [];// One-to-Many relationship with BusinessHours
 }
 ```
-[Many-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, a FoodResource can have many associated Tags, and each Tag can in turn be associated with any number of FoodResource. In our particular situation this [relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-class-for-join-entity) is made between FoodResource and Tag by joining TagId and FoodResourceId using ResourceTags.
+You may have notice the `= null!`, `string?`, and `= []`. Easiest way to think about them as required, not required, and can be an empty array. 
+
+[Many-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, a FoodResource can have many associated Tags, and each Tag can in turn be associated with any number of FoodResource. In our particular situation this relationship is made between FoodResource and Tag by joining TagId and FoodResourceId using ResourceTags.
 - Should look something like:
 ```
 public class ResourceTags
@@ -160,8 +170,6 @@ public class ResourceTags
  {
      public int Id { get; set; }
      public string Name { get; set; } = null!;
-
-     public List<FoodResource> FoodResource { get; } = [];  // Many-to-One relationship with ResourceTags
  }
 ```
 
@@ -171,12 +179,9 @@ public class ResourceTags
 public class BusinessHours
 {
     public int BusinessHourId { get; set; }
-    public int FoodResourceId { get; set; }  // Required foreign key property
-    public Day Day { get; set; } = null!; // One-to-One relationship with Day
+    public Day Day { get; set; } = null!; // Many-to-One relationship with Day
     public string? OpenTime { get; set; }
     public string? CloseTime { get; set; }
-
-    public FoodResource FoodResource { get; set; } = null!; // Required reference navigation to principal
 }
 ```
 
@@ -187,17 +192,23 @@ public class Day
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
-
-    public List<BusinessHours> BusinessHours { get; set; } = []; // Many-to-One relationship with BusinessHours
 }
 ```
- Now Depending on how we intend to configure these models we will be returning to the classes in step 4. 
+Now Depending on how we intend to configure these models we will be returning to the classes in [step 4](https://github.com/jjcanell77/LADP--EFC/blob/master/Instructions.md#step-4-configuring-a-model). 
+<!--- will need to update link for step 4 -->
  
 ##  Step 3: Database Integration 
-The database context is the main class that coordinates Entity Framework functionality for a data model. This class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection. Acting sort of like a “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value! This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
-- In Solution Explorer, right-click the project.
-- Select Add > New Folder > Name the folder Data.
--	Right-click the Data folder and select Add > Class. Name the class DataContext and click Add.
+The database context is the main class that coordinates Entity Framework functionality for a data model. This class is responsible for querying and saving data to your entity classes, and for creating and managing the database connection. It consists of these sequence of events:
+- A DbContext instance is created.
+- Entities are tracked using this instance.
+- Changes are made to the tracked entities.
+- The SaveChanges method is invoked to store the entities in memory to the underlying database.
+- The DbContext object is disposed or garbage-collected when it is no longer needed by the application.
+
+It acts sort of like a “Fish-Hook” into the database from your API, imagine a line being cast from your API Application/System into a SQL database via your connection string value. This is called Data Persistence which is a fancy word for any changes done with CRUD operations to be reflected onto the database.
+- In `Solution Explorer`, right-click the `project`.
+- Select `Add` > `New Folder` > `Name` the folder `Data`.
+-	Right-click the `Data` folder and select `Add` > `Class`. Name the class `DataContext` and click `Add`.
 -	Enter the following code:
 ```
 using LADP__EFC.Models;
@@ -224,53 +235,34 @@ namespace LADP__EFC.Data
 ```
 
 ### Register the database context
-In ASP.NET Core, services such as the DB context must be registered with the dependency injection (DI) container. The container provides the service to controllers.
-- Update Program.cs with something like:
+Next the we will register the DbContext using dependency injection (DI) in our main program which will provide the services to our controllers using the AddDbContext method as shown below. With DI, we are able to create a DbContext instance for each request and dispose of it when that request terminates.
+- You should be adding this to your `Program.cs` to look something like:
 ```
-using Microsoft.EntityFrameworkCore;
-using LADP__EFC.Data;
-
-namespace LADP__EFC
+builder.Services.AddDbContext<DataContext>(options =>
 {
-    public class Program
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+});
+```
+
+You can now take advantage of constructor injection in the controllers to retrieve an instance of DbContext which we will go over further in [step 6](https://github.com/jjcanell77/LADP--EFC/blob/master/Instructions.md#step-6--set-up-controllers). But here is an example that will be implemented later when creating the Controller.
+<!---  will need to update link for step 6 -->
+```
+ public class FoodResourcesController : ControllerBase
     {
-        public static void Main(string[] args)
+        private readonly DataContext _context;
+
+        public FoodResourcesController(DataContext context)
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<DataContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-
-            });
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
+            _context = context;
         }
-    }
 }
 ```
 
+
 ### Add Connection String
--	In Solution Explorer, open appsettings.json. 
+Inside our DbContext instance that we referenced the connection string which will give our application access to the database. 
+-	In `Solution Explorer`, open `appsettings.json`. 
 -	Go ahead an add the connection string. 
 -	Should look something like:
 ```
@@ -291,13 +283,39 @@ namespace LADP__EFC
 ## Step 4: Configuring a Model 
 The model can then be customized using mapping attributes (also known as data annotations) and/or calls to the ModelBuilder methods (also known as fluent API) in OnModelCreating, both of which will override the configuration performed by conventions.
 
-### Remember to Choose Either to Use Data Annotations or Fluent API
-- Fluent API will overwrite Use Data Annotations
+#### Remember to Choose Either to Use Data Annotations or Fluent API
+- Fluent API will overwrite the use of Data Annotations.
 
 ### [Data Annotations/Mapping Atrributes](https://www.learnentityframeworkcore.com/configuration/data-annotation-attributes) (Optional if not using prefered Fluent API)
-Using atrributes are nice because they are applied directly to the domain model, so it is easy to see how the model is configured just by examining the class files. You may have remember using Some attributes, such as Required and StringLength are leveraged by client frameworks such as ASP.NET MVC to provide UI-based validation based on the specified configuration.
-- One of the cons to using Data Annotations is that it may not cover every type of configuration, and could result in you having to implement some Fluent API as well. This will split configurations to more than one location adding unecessary complexity. 
-- Here is an example of the entities:
+Using atrributes are nice because they are applied directly to the domain model, so it is easy to see how the model is configured just by examining the class files. You may have seen using some attributes, such as Required and StringLength before but basicaly these annotations are used to provide UI-based validation based on the specified configuration you choose.
+- One of the cons to using Data Annotations is that it may not cover every type of configuration, and could result in you having to implement some Fluent API as well. This will split configurations to more than one location adding unecessary complexity.
+- EFC will thankfully most of the times set defaults for some information not given and is best seen when using data Migrations which is covered later in [step 5](https://github.com/jjcanell77/LADP--EFC/blob/master/Instructions.md#step-5--migrations).
+<!--- will need to update link for step 5 -->
+
+##### Table()
+- Will map an entity to the table with the same name as the `DbSet<Entity>` by default or you can use `Table()` to specify the table name.
+- Also the default schema is `dbo` but if you need it to be different this is where you would make the change `Table("TableName", Schema = "dbo")`
+
+##### Key
+- Is used to identify the entity's primary key.
+
+##### Column()
+- Can be used to specify column name, order, and type.
+- The default of the name of the property will be used as the column name if not specified. A big deal if not the same.
+- Type also plays a big role as EFC's default is usually the largest for that type which can cause many issues if not correctly specified.
+
+##### MaxLength()
+- As mentioned earlier the default chosen is usllay the largest possible choice for example with string would be nvarchar(Max) if not specified.
+
+##### Required
+- If you weren't sure is applied to an entity that is not nullable.
+
+##### ForeignKey()
+- Is used to specify which property is the foreign key in a relationship.
+
+Here is some examples of how you would implment these:
+- First make sure to add `using System.ComponentModel.DataAnnotations;`
+- Here is an example of the FoodResource entitie:
 ```
 [Table("FoodResource", Schema = "dbo")]
 public class FoodResource
@@ -309,7 +327,7 @@ public class FoodResource
     [Required]
     [MaxLength(255)]
     [Column("Name", TypeName = "nvarchar(255)")]
-    public string Name { get; set; }
+    public string Name { get; set; }  = null!;
 
     [MaxLength(100)]
     [Column("Area", TypeName = "nvarchar(100)")]
@@ -318,25 +336,25 @@ public class FoodResource
     [Required]
     [MaxLength(255)]
     [Column("StreetAddress", TypeName = "nvarchar(255)")]
-    public string StreetAddress { get; set; }
+    public string StreetAddress { get; set; }  = null!;
 
     [Required]
     [MaxLength(100)]
     [Column("City", TypeName = "nvarchar(100)")]
-    public string City { get; set; }
+    public string City { get; set; }  = null!;
 
     [Required]
     [MaxLength(2)]
     [Column("State", TypeName = "nvarchar(2)")]
-    public string State { get; set; }
+    public string State { get; set; }  = null!;
 
     [Required]
     [MaxLength(10)]
-    [Column("Zipcode", TypeName = "varchar(10)")]
-    public string Zipcode { get; set; }
+    [Column("Zipcode", TypeName = "nvarchar(10)")]
+    public string Zipcode { get; set; }  = null!;
 
     [MaxLength(50)]
-    [Column("Country", TypeName = "varchar(50)")]
+    [Column("Country", TypeName = "nvarchar(50)")]
     public string? Country { get; set; }
 
     [Column("Latitude", TypeName = "decimal(9, 6)")]
@@ -356,9 +374,9 @@ public class FoodResource
     [Column("Description", TypeName = "nvarchar(MAX)")]
     public string? Description { get; set; }
 
-    public ICollection<ResourceTags> ResourceTags { get; set; } // Many-to-Many relationship with Tag
+    public List<ResourceTags> ResourceTags { get; set; } = []; // Many-to-Many relationship with Tag
 
-    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+    public List<BusinessHours> BusinessHours { get; set; } = []; // One-to-Many relationship with BusinessHours
 }
 ```
 ```
@@ -393,7 +411,7 @@ public class Tag
     [Column("Name", TypeName = "nvarchar(100)")]
     public string Name { get; set; }
 
-    public ICollection<ResourceTags> ResourceTags { get; set; } // One-to-Many relationship with ResourceTags
+    public List<FoodResource> FoodResources { get; set; } // Many-to-One relationship with ResourceTags
 }
 ```
 ```
@@ -420,16 +438,16 @@ public class BusinessHours
 
     [MaxLength(10)]
     [Column("OpenTime", TypeName = "nvarchar(10)")]
-    public string OpenTime { get; set; }
+    public string? OpenTime { get; set; }
 
     [MaxLength(10)]
     [Column("CloseTime", TypeName = "nvarchar(10)")]
-    public string CloseTime { get; set; }
+    public string? CloseTime { get; set; }
 }
 ```
 ```
 [Table("Days", Schema = "dbo")]
-public class Days
+public class Day
 {
     [Key]
     [Column("Id", TypeName = "int")]
@@ -437,10 +455,10 @@ public class Days
 
     [Required]
     [MaxLength(10)]
-    [Column("Name", TypeName = "nchar(10)")]
+    [Column("Name", TypeName = "nvarchar(10)")]
     public string Name { get; set; }
 
-    public ICollection<BusinessHours> BusinessHours { get; set; } // One-to-Many relationship with BusinessHours
+    public List<BusinessHours> BusinessHours { get; set; } = [];  // One-to-Many relationship with BusinessHours
 }
 ```
 ### [Fluent API](https://www.learnentityframeworkcore.com/configuration/fluent-api) (Optional if not using Data Annotations/Mapping Atrributes)
