@@ -40,7 +40,7 @@ namespace LADP__EFC.Data
                 entity.ToTable("Days");
                 entity.HasKey(e => e.Id).HasName("PK_Days");
                 entity.Property(e => e.Id).HasColumnName("Id").HasColumnType("int");
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(10).HasColumnName("Name").HasColumnType("nchar(10)");
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(10).HasColumnName("Name").HasColumnType("nvarchar(10)");
             });
 
             modelBuilder.Entity<FoodResource>(entity =>
@@ -53,7 +53,7 @@ namespace LADP__EFC.Data
                 entity.Property(e => e.StreetAddress).IsRequired().HasMaxLength(255).HasColumnName("StreetAddress").HasColumnType("nvarchar(255)");
                 entity.Property(e => e.City).IsRequired().HasMaxLength(100).HasColumnName("City").HasColumnType("nvarchar(100)");
                 entity.Property(e => e.State).IsRequired().HasMaxLength(2).HasColumnName("State").HasColumnType("nvarchar(2)");
-                entity.Property(e => e.Zipcode).IsRequired().HasMaxLength(50).HasColumnName("Zipcode").HasColumnType("varchar(50)");
+                entity.Property(e => e.Zipcode).IsRequired().HasMaxLength(50).HasColumnName("Zipcode").HasColumnType("nvarchar(50)");
                 entity.Property(e => e.Country).HasMaxLength(100).HasColumnName("Country").HasColumnType("nvarchar(100)");
                 entity.Property(e => e.Latitude).IsRequired().HasColumnName("Latitude").HasColumnType("decimal(9, 6)");
                 entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude").HasColumnType("decimal(9, 6)");
