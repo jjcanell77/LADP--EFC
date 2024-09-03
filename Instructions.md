@@ -153,10 +153,10 @@ public class FoodResource
     public List<BusinessHours> BusinessHours { get; set; } = [];// One-to-Many relationship with BusinessHours
 }
 ```
-You may have notice the `= null!`, `string?`, and `= []`. Easiest way to think about them as required, not required, and can be an empty array. 
+You may have notice the `= null!`, `string?`, and `= []`. Easiest way to think about them as required, not required, and can be an empty array. I also added some notes in regards to the relationships which will be touched on more as we go on. 
 
-[Many-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, a FoodResource can have many associated Tags, and each Tag can in turn be associated with any number of FoodResource. In our particular situation this relationship is made between FoodResource and Tag by joining TagId and FoodResourceId using ResourceTags.
-- Should look something like:
+[Many-to-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships are used when any number entities of one entity type is associated with any number of entities of the same or another entity type. For example, using the object FoodResource, it can have many associated Tags, and each Tag can in turn be associated with any number of FoodResource. In our particular situation this relationship is made between FoodResource and Tag by joining TagId and FoodResourceId using ResourceTags.
+- it should look something like:
 ```
 public class ResourceTags
 {
@@ -235,7 +235,7 @@ namespace LADP__EFC.Data
 ```
 
 ### Register the database context
-Next the we will register the DbContext using dependency injection (DI) in our main program which will provide the services to our controllers using the AddDbContext method as shown below. With DI, we are able to create a DbContext instance for each request and dispose of it when that request terminates.
+There a couple of ways to accomplish this, but for this project we will be  registering the DbContext using `dependency injection (DI)` in our main program. This in turn will provide the services to our controllers using the `AddDbContext` method as shown in the example below. With DI, we are able to create a DbContext instance for each request and dispose of it when that request terminates.
 - You should be adding this to your `Program.cs` to look something like:
 ```
 builder.Services.AddDbContext<DataContext>(options =>
@@ -465,10 +465,10 @@ public class Day
 This approach is an alternative to using data annotations and provides more control over the configuration with the plus of being able to be located in one place, away from the model classes. This is applied inside of the database context class to entities/models properties via chained methods. 
 - These methods can be in conjuntion with Data annotations to cover areas that are missed. Such as default Schema, DB functions, additional data annotation attributes and entities to be excluded from mapping.
 - Also can handle entity to table and relationships mapping e.g. PrimaryKey, AlternateKey, Index, table name, one-to-one, one-to-many, many-to-many relationships etc.
-- And lastly, provide property onfiguration meaning column name, default value, nullability, ForeignKey, data type, concurrency column etc.
+- And lastly, provide property configuration meaning column name, default value, nullability, ForeignKey, data type, concurrency column etc.
 
-#### The steps:
-Adding an entity to OnModelCreating method inside the DataContext Class we made ealier. Starting with FoodResource using the ToTable method to specify the name of the database table that the entity should map to.
+#### Implementing Fluent API:
+Adding an entity to OnModelCreating method inside the DataContext Class we made ealier but left empty. Starting with FoodResource using the ToTable method to specify the name of the database table that the entity should map to.
 - Should look like this:
 ```
 protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -493,7 +493,7 @@ Entity Framework Core provides a range of options for configuring entity [proper
 entity.Property(e => e.Name).IsRequired().HasMaxLength(255).HasColumnName("Name").HasColumnType("nvarchar(255)");
 ```
 
-Using these steps you should be able to fill out the rest of the FoodResource Entity
+Using these steps you should be able to fill out and address the rest of the properties of the FoodResource Entity
 - Should end up like this:
 ```
 modelBuilder.Entity<FoodResource>(entity =>
@@ -516,8 +516,11 @@ modelBuilder.Entity<FoodResource>(entity =>
 });
 ```
 
-The only exceptions would be when dealing with different types of relationships we touched on earlier. Fluent API uses a HasOne method to configure the one side of a one to many relationship, or one end of a one to one relationship. It is never necessary to configure a relationship twice, once starting from the principal, and then again starting from the dependent. Also, attempting to configure the principal and dependent halves of a relationship separately generally does not work. Choose to configure each relationship from either one end or the other and then write the configuration code only once.
-- One-to-one relationships are used when one entity is associated with at most one other entity. For example, a Blog has one BlogHeader, and that BlogHeader belongs to a single Blog.
+While this is how you would address the basic properties. Next would be to move on to the different types of relationships we touched on earlier. 
+##### One-To-One
+Fluent API uses a `HasOne` method to configure the one side of a one to many relationship, or one end of a one to one relationship. 
+- `Note:` It is never necessary to configure a relationship twice, once starting from the principal, and then again starting from the dependent. Also, attempting to configure the principal and dependent halves of a relationship separately generally does not work. Choose to configure each relationship from either one end or the other and then write the configuration code only once.
+- `One-to-One` relationships are used when one entity is associated with at most one other entity. For example, a Blog has one BlogHeader, and that BlogHeader belongs to a single Blog.
 - [One to One](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-one) example would look something like this:
 ```
   public class SampleContext : DbContext
@@ -533,14 +536,14 @@ The only exceptions would be when dealing with different types of relationships 
           .IsRequired(false);
     }
 }
-// Principal (parent)
+// Principal (parent/principal)
 public class Blog
 {
     public int Id { get; set; }
     public BlogHeader? Header { get; set; } // Reference navigation to dependent
 }
 }
-// Dependent (child)
+// Dependent (child/dependent)
 public class BlogHeader
 {
     public int Id { get; set; }
@@ -548,11 +551,12 @@ public class BlogHeader
 }
 ```
 
-With that being said when used in conjunction with HasOne method the WithMany can configure a One to Many relationship. The example below has two one-to-many relationships, one for each of the ForeignKeys defined in the join table. This realtionship is made up of:
+##### One-To-Many
+With that being said when used in conjunction with `HasOne` method the `WithMany` can configure a `One-to-Many` relationship. The example below has two one-to-many relationships, one for each of the ForeignKeys defined in the join table. This kind of realtionship is made up of:
 - One or more primary or alternate key properties on the principal entity; that is the "one" end of the relationship.
 - One or more ForeignKeys properties on the dependent entity; that is the "many" end of the relationship.
-- Optionally, a collection navigation on the principal entity referencing the dependent entities.
-- Optionally, a reference navigation on the dependent entity referencing the principal entity.
+- `Optional:` a collection navigation on the principal entity referencing the dependent entities.
+- `Optional:` a reference navigation on the dependent entity referencing the principal entity.
 - [One to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/one-to-many) example would look something like this:
 ```
   public class SampleContext : DbContext
@@ -586,8 +590,9 @@ public class BusinessHours
 }
 ```
 
-Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. Join tables in particular are is unique to Many to Many relationships. If you check the documentation there are a lot of ways to go about this achiecing this without the use of join tables. I will show you one of these way below but this is optional as the two one-to-many relationships will suffice. 
-
+##### Many-To-Many
+Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. If you check the documentation there are a lot of ways to go about this without the use of join tables. This is beccause EFC has many default setting and if defined correctly will make those assumptions for you.
+- `Note:` Join tables in particular are is unique to Many to Many relationships. 
 - Here is an optional way to acheive a Many-to-Many relationship example:
 ```
   public class SampleContext : DbContext
