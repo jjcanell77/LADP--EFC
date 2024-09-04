@@ -552,7 +552,7 @@ public class BlogHeader
 ```
 
 ##### One-To-Many
-With that being said when used in conjunction with `HasOne` method the `WithMany` can configure a `One-to-Many` relationship. The example below has two one-to-many relationships, one for each of the ForeignKeys defined in the join table. This kind of realtionship is made up of:
+With that being said when used in conjunction with `HasOne` method the `WithMany` can configure a `One-to-Many` relationship. The example below descibes the relationship between the FoodResource and the BusinessHours but inisde the entity FoodResource. If you see how it is written you can see how it be defined in either enitity. This kind of realtionship is made up of:
 - One or more primary or alternate key properties on the principal entity; that is the "one" end of the relationship.
 - One or more ForeignKeys properties on the dependent entity; that is the "many" end of the relationship.
 - `Optional:` a collection navigation on the principal entity referencing the dependent entities.
@@ -591,9 +591,9 @@ public class BusinessHours
 ```
 
 ##### Many-To-Many
-Now with the example given above with FoodResource, ResourceTags, and Tags have one-to-many relationships between them and that works just fine. You just have to imagine that from FoodResource to Tags there is a [Many to Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationship, this is due to the join table or ResourceTags in this case. If you check the documentation there are a lot of ways to go about this without the use of join tables. This is beccause EFC has many default setting and if defined correctly will make those assumptions for you.
-- `Note:` Join tables in particular are is unique to Many to Many relationships. 
-- Here is an optional way to acheive a Many-to-Many relationship example:
+When it comes to [Many-To-Many](https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many) relationships instead of using the `hasOne` method we will instead use `hasMany` with `WithMany`. If you think of how this would be reflected in a database you can kinda see why I mentioned adding the join table when it came to describing the realtionship between FoodResource and Tags. This can be a bit tricky if you check the documentation there are a lot of ways to go about this without the use of join tables described as an enitity like ResourceTags. This is beccause EFC has many default setting and if defined correctly will make those assumptions for you and should therefore be reflected similarly database.
+- `Note:` Join tables in particular are unique to Many to Many relationships. 
+- Here is one way to acheive a Many-to-Many relationship example:
 ```
   public class SampleContext : DbContext
 {
@@ -633,10 +633,11 @@ public class Tag
 }
 ```
 
-When working with relationships there may also come a time when you want preserve dependent data or specify that they should be deleted as well. This is where the [onDelete](https://www.learnentityframeworkcore.com/configuration/fluent-api/ondelete-method) method comes in to play. 
-- Cascade means that dependents should be deleted
-- Restrict means that  dependents are unaffected
-- SetNull means that the ForeignKey values in dependent rows should update to NULL
+##### OnDelete()
+When working with relationships there may also come a time when you want preserve dependent data or specify that they should be deleted as well. This is where the [onDelete](https://www.learnentityframeworkcore.com/configuration/fluent-api/ondelete-method) method comes in to play.
+- `Cascade` means that dependents should be deleted
+- `Restrict` means that dependents are unaffected
+- `SetNull` means that the ForeignKey values in dependent rows should update to NULL
 - Here is an example Referening BusinessHours and Day:
 ```
  public class SampleContext : DbContext
@@ -742,24 +743,24 @@ public class BusinessHours
 
 #### Go ahead and finish up the rest of the configurations and if you get stuck please refer to the [code](https://github.com/jjcanell77/LADP--EFC/tree/master/LADP-%20EFC) for help.
 
-##  Step 5 : Migrations
+##  Step 5 : Migrations (Can be Skipped for until this section is completed)
 EF Core provides us with two primary ways of keeping the EF Core model and database schema in sync. It does this by letting us choose between whether the EF Core model or the database schema is the source of truth and go from there.
 - [Model](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli): if the model is the source truth then as we make changes to the model we will incrementally applies the corresponding schema changes to your database so that it remains compatible with your EF Core model.
 - [Database](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli): vise versa if you want your database schema to be the source of truth we can use Reverse Engineering to scaffold a DbContext and the entity type classes by reverse engineering your database schema into an EF Core model.
 #### My intentions are to proceed with the Model First Aprroach
 
 ##  Step 6 : Set Up Controllers
-As mentioned we are using a controler based API and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
+As mentioned we are using a `controler-based API` and a Web API controller is a class which can be created under the Controllers folder or any other folder under your project's root folder. It handles incoming HTTP requests and send response back to the caller. This can include multiple action methods whose names match with HTTP verbs like Get, Post, Put and Delete.
 ### Scaffold a controller (Optional)
 One way to do this is to take advatage of Scaffolding, or you can build it from scratch. Scaffolding uses ASP.Net's templates to create a basic API Controller. This is just to get you started as you will need to make updates which is why it is optional. 
 This template will mark the class with the [ApiController] attribute, that indicates that the controller responds to web API requests. It also uses DI to inject the database context (DataContext) into the controller. The database context is used in each of the CRUD methods in the controller.
--	Right-click the Controllers folder.
--	Select Add > New Scaffolded Item.
--	Select API Controller with actions, using Entity Framework, and then select Add.
--	Select FoodResource(LADP_EFC.Models) in the Model class.
--	Select DataContext(LADP_EFC.Data) in the Data context class.
--	Select Add.
--	Should look something like this but with logic in the methods:
+-	Right-click the `Controllers` folder.
+-	Select `Add` > `New Scaffolded Item`.
+-	Select `API Controller with actions`, using `Entity Framework`, and then select `Add`.
+-	Select `FoodResource(LADP_EFC.Models)` in the `Model class`.
+-	Select `DataContext(LADP_EFC.Data)` in the `Data context class`.
+-	Select `Add`.
+-	Should look something like this but we will add logic in the methods later:
 ```
 namespace LADP__EFC.Controllers
 {
@@ -803,6 +804,61 @@ namespace LADP__EFC.Controllers
     }
 }
 ```
+
+#### Update Controller Methods
+Now that we have the basic set up for the controllers its is time to update the methods. Remember we will be utilizing a [Repository](https://github.com/jjcanell77/LADP--EFC/blob/master/Instructions.md#step-7-setting-up-the-repository) that will handle all of the logic behind the actual execution of these so it us best to set to handle exceptions, status codes, and returning the object if neccessary.
+<!-- Need to update link when moved to main project -->
+##### Action Return Types
+Here are the following options for web API controller action return types that can be used:
+- void: if you are returning nothing.
+- [Specific type](https://learn.microsoft.com/en-us/aspnet/core/web-api/action-return-types?view=aspnetcore-8.0#specific-type): can just return a specific type like a string or a custom entity.
+
+This action will return a `200 Ok` status code along with whichever type you choose when it runs successfully. Of course, in case of errors, it will return a `500 Error` status code along with error details.However, if we want to add some validations into the action and return a validation failure with a `400 Bad Request` response, this approach won’t work and we have to use either `IActionResult` or `ActionResult<T>` types.
+- [IActionResult](https://learn.microsoft.com/en-us/aspnet/core/web-api/action-return-types?view=aspnetcore-8.0#iactionresult-type)
+
+Whenever an action has multiple return paths and needs to support returning multiple `ActionResult` types, then  `IActionResult` is a great choice. 
+
+On top of that, the ControllerBase class has defined some convenience methods which is equivalent to creating and returning an ActionResult type. For instance, if we want to return a 400 Bad Request response, instead of using the return new BadRequestResult();, we could just write return BadRequest(); . Similarly, we could use Ok() and NotFound() methods to return the 200 Ok and 404 Not Found responses respectively.
+
+While using IActionResult type, it is important to provide the [ProducesResponseType] attribute for all possible scenarios since multiple response types and paths are possible.
+
+Ex.
+```
+[HttpGet("{id}")]
+[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FoodResource))]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public IActionResult GetById(int id)
+{
+    var foodResource = _repository.GetById(id);
+    if (foodResource == null)
+    {
+        return NotFound();
+    }
+
+    return Ok(foodResource);
+}
+```
+- [ActionResult<T>](https://learn.microsoft.com/en-us/aspnet/core/web-api/action-return-types?view=aspnetcore-8.0#actionresultt-type)
+
+One advantage of using this type is that we can skip the Type property of the [ProducesResponseType] attribute. This is because the expected return type can be inferred from the T in the ActionResult<T>. Or we exclude [ProducesResponseType] all together.
+Ex.
+```
+[HttpGet("{id}")]
+public ActionResult<FoodResource> GetFoodResource(int id)
+{
+        var foodResource = _repository.GetById(id);
+
+        if (foodResource == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(foodResource);
+    }
+}
+```
+
+<!-- - [HttpResults](https://learn.microsoft.com/en-us/aspnet/core/web-api/action-return-types?view=aspnetcore-8.0#httpresults-type) -->
 
 ## Step 7: Setting up the Repository
 Using the repository pattern in Entity Framework Core helps create a clean separation between the data access and business logic layers. This will have a similar functionality that the Services Folder/Files did in your Sabio Project. 

@@ -59,7 +59,7 @@ namespace LADP__EFC.Data
                 entity.Property(e => e.Longitude).IsRequired().HasColumnName("Longitude").HasColumnType("decimal(9, 6)");
                 entity.Property(e => e.Phone).HasMaxLength(20).HasColumnName("Phone").HasColumnType("nvarchar(20)");
                 entity.Property(e => e.Website).HasMaxLength(255).HasColumnName("Website").HasColumnType("nvarchar(255)");
-                entity.Property(e => e.Description).HasColumnName("Description").HasColumnType("nvarchar(MAX)");
+                entity.Property(e => e.Description).HasColumnName("Description").HasColumnType("nvarchar(MAX)");//look into changing this
 
                 entity.HasMany(e => e.BusinessHours)
                     .WithOne(e => e.FoodResource)

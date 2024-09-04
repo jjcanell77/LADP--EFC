@@ -102,10 +102,11 @@ namespace LADP__EFC.Repository
                     _context.Tags.Add(tag);
                     _context.SaveChanges(); // Save to get the tag ID
                 }
+
+                newFoodResource.Tags.Add(tag);
                 // Handle the join table ResourceTags
                 var resourceTag = new ResourceTags { TagId = tag.Id, FoodResourceId = newFoodResource.Id };
                 _context.ResourceTags.Add(resourceTag);
-                newFoodResource.Tags.Add(tag);
             }
 
             // Ensure Days are properly handled for BusinessHours
@@ -159,7 +160,7 @@ namespace LADP__EFC.Repository
             foreach (var tag in allTags)
             {
                 //checks if tag will be added
-                if (updateItem.Tags.Any(t => t.Name == tag.Name))    
+                if (updateItem.Tags.Any(t => t.Name == tag.Name))
                 {
                     // Check if tag exists
                     var newTag = _context.Tags.FirstOrDefault(t => t.Name == tag.Name);
@@ -209,7 +210,7 @@ namespace LADP__EFC.Repository
                 else// updates the day given
                 {
                     businessHour.OpenTime = newBH?.OpenTime;
-                    businessHour.CloseTime= newBH?.CloseTime;
+                    businessHour.CloseTime = newBH?.CloseTime;
                 }
             }
 
@@ -219,7 +220,7 @@ namespace LADP__EFC.Repository
 
         private static FoodResourceDTO MapFoodResource(FoodResource item)
         {
-            var mappedItem =  new FoodResourceDTO
+            var mappedItem = new FoodResourceDTO
             {
                 Id = item.Id,
                 Name = item.Name,
@@ -233,10 +234,11 @@ namespace LADP__EFC.Repository
                 Longitude = item.Longitude,
                 Phone = item.Phone,
                 Website = item.Website,
-                Description = item.Description            };
-            if(item.Tags.Count > 0)
+                Description = item.Description
+            };
+            if (item.Tags.Count > 0)
             {
-                foreach(var tag in item.Tags)
+                foreach (var tag in item.Tags)
                 {
                     mappedItem.Tags.Add(new TagDTO { Name = tag.Name });
                 }
@@ -245,7 +247,7 @@ namespace LADP__EFC.Repository
             {
                 mappedItem.BusinessHours.Add(new BusinessHoursDTO
                 {
-                    Day = new DayDTO { Name = bh.Day.Name},
+                    Day = new DayDTO { Name = bh.Day.Name },
                     OpenTime = bh?.OpenTime,
                     CloseTime = bh?.CloseTime,
                 });
